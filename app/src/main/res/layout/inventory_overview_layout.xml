@@ -1,0 +1,49 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout android:id="@+id/RelativeLayout01"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+        <ImageView
+            android:id="@+id/limriInventoryImg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerInParent="true"
+            android:src="@drawable/group_img"
+            />
+
+        <TextView
+            android:id="@+id/limriInventoryName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            android:layout_centerHorizontal="true"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_centerInParent="true"
+        />
+
+        <Button
+            android:id="@+id/limriButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Press Me"
+            android:layout_alignParentRight="true"
+            android:layout_centerInParent="true"
+
+            />
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/limriInventoryDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Test dessssssssssssssscription of an inventory"/>
+
+</LinearLayout>
