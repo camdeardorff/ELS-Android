@@ -9,7 +9,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 
-
 import com.els.button.Models.ELSIoT;
 import com.els.button.Models.InventoryListAdapter;
 import com.els.button.Models.InventoryListAdapterDelegate;
@@ -181,4 +180,3 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         }
     }
 }
-

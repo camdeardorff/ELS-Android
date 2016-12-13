@@ -92,9 +92,7 @@ public class ELSRest {
                 return true;
             }
         }
-
         return false;
-
     }
 
 

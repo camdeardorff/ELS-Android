@@ -15,11 +15,4 @@ public class ELSLimri extends ELSEntity {
         super(inventoryID, pin, title, description);
         this.statusSheet = statusSheet;
     }
-
-
-
-
-
-
-
 }
