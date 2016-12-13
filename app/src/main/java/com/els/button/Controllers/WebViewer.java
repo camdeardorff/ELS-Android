@@ -24,7 +24,7 @@ public class WebViewer extends AppCompatActivity {
     String pin;
 
     //TODO: Change this ip address!
-    String HOST = "149.143.3.182";
+    String HOST = "192.168.2.3";
     String SERVER_LOCATION = "http://" + HOST + ":8080/ContentServer/ContentServer";
     String DISPLAY_CLIENT_LOCATION = "http://" + HOST + ":8091/DisplayClient/NewDisplay.html";
 
