@@ -1,7 +1,6 @@
 package com.els.button;
 
 import android.app.Application;
-import android.util.Log;
 
 import com.raizlabs.android.dbflow.config.FlowConfig;
 import com.raizlabs.android.dbflow.config.FlowManager;
@@ -17,7 +16,5 @@ public class Start extends Application {
         super.onCreate();
         // start DBFlow instance now
         FlowManager.init(new FlowConfig.Builder(this).openDatabasesOnInit(true).build());
-
-        Log.d("START", "BAM!: on create in Start");
     }
 }
