@@ -15,7 +15,6 @@ import com.els.button.R;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by cameron on 3/29/16.
@@ -169,15 +168,15 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
                 //do a loop over the buttons and add them to the view here
 
                 List<Button> buttonList = new ArrayList<Button>();
-                for (final Map.Entry<String,String> entry: iotData.valueAndTitle.entrySet()) {
+                for (final ELSIoTButton btn : iotData.buttons) {
                     Button button = new Button(context);
-                    button.setText(entry.getValue());
+                    button.setText(btn.getTitle());
                     button.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             //when it is clicked tell the delegate that this button was pressed. It will transition
                             //to another activity. This is the wrong layer to be doing that kind of stuff
-                            delegate.iotButtonWasPressedWithIotInfoAndSetQuestionValue(iotData, entry.getKey());
+                            delegate.iotButtonWasPressedWithIotInfoAndSetQuestionValue(iotData, btn.getValue());
                         }
                     });
                     buttonList.add(button);
