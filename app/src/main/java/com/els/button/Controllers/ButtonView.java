@@ -62,10 +62,21 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
 
     private ArrayList<ELSEntity> getInventories() {
+        Log.d("ButtonView", "get inventories");
         ArrayList<ELSEntity> inventories = new ArrayList<ELSEntity>();
 
-        inventories.addAll(SQLite.select().from(ELSLimri.class).queryList());
-        inventories.addAll( SQLite.select().from(ELSIoT.class).queryList());
+        ArrayList<ELSLimri> limriInventories = new ArrayList<ELSLimri>(SQLite.select().from(ELSLimri.class).queryList());
+
+        for (ELSLimri inventory : limriInventories) {
+
+            ELSRest rest = new ELSRest(hostIp, inventory.getInventoryID(), inventory.getPin());
+            if (rest.login()) {
+                inventory.update(rest.getInventoryStatus(inventory.getStatusSheet()));
+            }
+        }
+
+        inventories.addAll(limriInventories);
+        inventories.addAll(SQLite.select().from(ELSIoT.class).queryList());
 
         Collections.sort(inventories, new Comparator<ELSEntity>() {
             @Override
