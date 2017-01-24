@@ -1,6 +1,7 @@
 package com.els.button.Controllers;
 
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.els.button.Models.ELSLimri;
+import com.els.button.Networking.ELSRest;
 import com.els.button.R;
 
 public class InventoryConfigurator extends AppCompatActivity {
@@ -41,12 +43,28 @@ public class InventoryConfigurator extends AppCompatActivity {
                 Log.d("InventoryConfigurator", "pin: " + pin);
 
                 if (!iid.isEmpty() && !pin.isEmpty()) {
-                    ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "status");
-                    newLimri.save();
-                    Log.d("InventoryConfigurator", "saved new elslimri");
-//                    finishActivity(SUCCESSFUL_INVENTORY_CREATION);
-                    setResult(SUCCESSFUL_INVENTORY_CREATION);
-                    finish();
+                    ELSRest rest = new ELSRest(host, iid, pin);
+                    if (rest.login()) {
+                        ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
+                        newLimri.save();
+                        newLimri.update(rest.getInventoryStatus(newLimri.getStatusSheet()));
+                        Log.d("InventoryConfigurator", "saved new elslimri");
+                        setResult(SUCCESSFUL_INVENTORY_CREATION);
+                        finish();
+                    } else {
+                        // 1. Instantiate an AlertDialog.Builder with its constructor
+                        AlertDialog.Builder builder = new AlertDialog.Builder(InventoryConfigurator.this);
+
+                        // 2. Chain together various setter methods to set the dialog characteristics
+                        builder.setMessage(R.string.activity_inventory_configurator_alert_message)
+                                .setTitle(R.string.activity_inventory_configurator_alert_title);
+
+                        // 3. Get the AlertDialog from create()
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+
+                    }
+
                 } else {
                     // report errors
                     Log.d("InventoryConfigurator", "iid and pin are empty");
@@ -60,14 +78,9 @@ public class InventoryConfigurator extends AppCompatActivity {
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//               finishActivity(CANCELED_INVENTORY_CREATION_REQUEST);
                 setResult(CANCELED_INVENTORY_CREATION_REQUEST);
                 finish();
             }
         });
     }
-
-
-
-
 }
