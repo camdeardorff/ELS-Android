@@ -19,15 +19,11 @@ import com.els.button.R;
  * Created by cameron on 3/29/16.
  */
 public class WebViewer extends AppCompatActivity {
-    String sheet;
-    String id;
-    String pin;
-
-    //TODO: Change this ip address!
-    String HOST = "192.168.2.3";
-    String SERVER_LOCATION = "http://" + HOST + ":8080/ContentServer/ContentServer";
-    String DISPLAY_CLIENT_LOCATION = "http://" + HOST + ":8091/DisplayClient/NewDisplay.html";
-
+    // instance variables set by calling activity
+    public String sheet;
+    public String id;
+    public String pin;
+    public String host;
 
 
     @Override
@@ -37,19 +33,22 @@ public class WebViewer extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.webViewToolbar);
         setSupportActionBar(toolbar);
 
+        // set the address for the host
+
         Log.d("WebViewer", "In on create");
         Bundle bundle = getIntent().getExtras();
         this.sheet = bundle.getString("sheet");
         this.id = bundle.getString("id");
         this.pin = bundle.getString("pin");
+        this.host = bundle.getString("host");
 
-        Log.d("WebViewer", "Sheet: " + sheet + ", id: " + id + ", pin: " + pin);
+        Log.d("WebViewer", "Sheet: " + sheet + ", id: " + id + ", pin: " + pin + ", host: " + host);
 
 
         WebView myWebView = (WebView) findViewById(R.id.webView);
-        myWebView.loadUrl(DISPLAY_CLIENT_LOCATION + "?id=" + id + "&pin=" + pin + "&sheet=" + sheet + "#");//"http://10.144.50.214:8091/DisplayClient/NewDisplay.html");
+        myWebView.loadUrl(getDisplayClientLocation() + "?id=" + id + "&pin=" + pin + "&sheet=" + sheet + "#");
         Log.d("WebViewer", "url: " + myWebView.getUrl());
-        myWebView.setWebViewClient(new MyWebViewClient());
+        myWebView.setWebViewClient(new ELSWebViewClient());
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
 
@@ -83,7 +82,7 @@ public class WebViewer extends AppCompatActivity {
     }
 
     // Use When the user clicks a link from a web page in your WebView
-    private class MyWebViewClient extends WebViewClient {
+    private class ELSWebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             if (Uri.parse(url).getHost().equals("www.centerend.com")) {
@@ -95,6 +94,14 @@ public class WebViewer extends AppCompatActivity {
             startActivity(intent);
             return true;
         }
+    }
+
+    private String getServerURL() {
+        return "http://" + host + ":8080/ContentServer/ContentServer";
+    }
+
+    private String getDisplayClientLocation() {
+        return "http://" + host + ":8091/DisplayClient/NewDisplay.html";
     }
 
 }
