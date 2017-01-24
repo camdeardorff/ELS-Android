@@ -9,31 +9,28 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 
+import com.els.button.Models.ELSEntity;
 import com.els.button.Models.ELSIoT;
+import com.els.button.Models.ELSLimri;
 import com.els.button.Models.InventoryListAdapter;
 import com.els.button.Models.InventoryListAdapterDelegate;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
-import com.els.button.Models.ELSEntity;
-import com.els.button.Models.ELSLimri;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 
-import org.w3c.dom.Document;
-
-import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 
 public class ButtonView extends AppCompatActivity implements InventoryListAdapterDelegate {
 
-    public static final String HOST_IP = "149.143.3.182";
+    // instance variable for host ip, the value is retrieved from the strings file
+    private static String hostIp = ""; //"192.168.0.29";
+    private static InventoryListAdapter listAdapter = null;
+
+    static final int NEW_INVENTORY_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,65 +39,45 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         Toolbar toolbar = (Toolbar) findViewById(R.id.buttonViewToolbar);
         setSupportActionBar(toolbar);
 
-        /**
-         * CURRENT STATUS
-         * Button view and web view are both functional and displaying properly
-         * webview goes to correct page
-         * buttonview goes to webview after button clicked
-         *
-         * NOT YET COMPLETE: hooking the buttons into the ELSRest class!
-         * buttons need to be refreshed on load with a login and a get status
-         * functionality coming soon
-         *
-         * THE ELS Rest class is complete. the only none functional component is the get question
-         * function.... Next steps are to hook the buttonview buttons up with the completed rest class
-         * and then refresh them on load.
-         */
+        // get the host ip address from the strings file
+        hostIp = getString(R.string.HOST_IP);
+        Log.d("ButtonView", "host ip from strings: " + hostIp);
 
-
-
-        ArrayList<ELSEntity> buttonList = new ArrayList<ELSEntity>();
-
-        ELSLimri inventory1 = new ELSLimri("0987654321", "2222", "Couple 1", "The first couple", "W201");
-        buttonList.add(inventory1);
-
-        ELSLimri inventory2 = new ELSLimri("0987654321", "2222", "Couple 2", "The second couple", "W202");
-        buttonList.add(inventory2);
-
-        ELSLimri inventory3 = new ELSLimri("0987654321", "2222", "Couple 3", "The third couple", "W203");
-        buttonList.add(inventory3);
-
-        ELSLimri inventory4 = new ELSLimri("0987654321", "2222", "Couple 4", "The fourth couple", "W204");
-        buttonList.add(inventory4);
-
-        ELSLimri inventory5 = new ELSLimri("0987654321", "2222", "Couple 5", "The fifht couple", "W205");
-        buttonList.add(inventory5);
-
-        ELSLimri inventory6 = new ELSLimri("0987654321", "2222", "Couple 6", "The sixth couple", "W206");
-        buttonList.add(inventory6);
-
-
-
-
-        Map<String,String> buttonAndTitle = new HashMap<String, String>();
-        buttonAndTitle.put("2", "on");
-        buttonAndTitle.put("1", "off");
-
-        ELSIoT inventory7 = new ELSIoT("0987654321", "1111", "qW201D1", "Test iot", "This is a test of the iot overview", buttonAndTitle);
-        buttonList.add(inventory7);
-
-
-
-        InventoryListAdapter listAdapter;
-        listAdapter = new InventoryListAdapter(this, this, buttonList);
-
-
-
-        final ListView listView = (ListView) findViewById(R.id.listView);
-        listView.setAdapter(listAdapter);
-
-
+        updateList();
     }
+
+
+    private void updateList() {
+        final ListView listView = (ListView) findViewById(R.id.listView);
+
+        if (this.listAdapter == null) {
+            listAdapter = new InventoryListAdapter(this, this, this.getInventories());
+            listView.setAdapter(listAdapter);
+        } else {
+            listAdapter.clear();
+            listAdapter.addAll(this.getInventories());
+            listAdapter.notifyDataSetChanged();
+        }
+    }
+
+
+    private ArrayList<ELSEntity> getInventories() {
+        ArrayList<ELSEntity> inventories = new ArrayList<ELSEntity>();
+
+        inventories.addAll(SQLite.select().from(ELSLimri.class).queryList());
+        inventories.addAll( SQLite.select().from(ELSIoT.class).queryList());
+
+        Collections.sort(inventories, new Comparator<ELSEntity>() {
+            @Override
+            public int compare(ELSEntity elsEntity, ELSEntity t1) {
+                return elsEntity.dateAdded.compareTo(t1.dateAdded);
+            }
+        });
+
+        return inventories;
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -116,33 +93,24 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        if (id == R.id.action_create_new) {
+            Intent intent = new Intent(this, InventoryConfigurator.class);
+            intent.putExtra("host", hostIp);
+            startActivityForResult(intent, NEW_INVENTORY_REQUEST);
+        } else if (id == R.id.action_refresh) {
+            this.updateList();
+        } else if (id == R.id.action_settings) {
+
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("ButtonView", "onActivityResult");
+        updateList();
 
-    //method to convert Document to String
-    public String getStringFromDocument(Document doc)
-    {
-        try
-        {
-            DOMSource domSource = new DOMSource(doc);
-            StringWriter writer = new StringWriter();
-            StreamResult result = new StreamResult(writer);
-            TransformerFactory tf = TransformerFactory.newInstance();
-            Transformer transformer = tf.newTransformer();
-            transformer.transform(domSource, result);
-            return writer.toString();
-        }
-        catch(TransformerException ex)
-        {
-            ex.printStackTrace();
-            return null;
-        }
     }
 
     @Override
@@ -150,22 +118,25 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         Log.d("ButtonView","limriButtonWasPressedWithLimriInfo");
         Intent intent = new Intent(this, WebViewer.class);
 
-        intent.putExtra("sheet", elsLimri.statusSheet);
-        intent.putExtra("id", elsLimri.inventoryID);
-        intent.putExtra("pin", elsLimri.pin);
+        intent.putExtra("sheet", elsLimri.getStatusSheet());
+        intent.putExtra("id", elsLimri.getInventoryID());
+        intent.putExtra("pin", elsLimri.getPin());
+        Log.d("ButtonView", "putting host as: " + hostIp );
+        intent.putExtra("host", hostIp);
         startActivity(intent);
+
     }
 
     @Override
     public void iotButtonWasPressedWithIotInfoAndSetQuestionValue(ELSIoT elsIoT, String value) {
         Log.d("ButtonView", "iotButtonWasPressedWithSetQuestionValue");
 
-        ELSRest comm = new ELSRest(HOST_IP, elsIoT.inventoryID, elsIoT.pin);
+        ELSRest comm = new ELSRest(hostIp, elsIoT.getInventoryID(), elsIoT.getPin());
         if (comm.login()) {
             Log.d("ButtonView", "Login was successful");
             //make a hashmap for the questions and answers to send
             HashMap<String, String> questionAndAnswer = new HashMap<String, String>();
-            questionAndAnswer.put(elsIoT.qID, value);
+            questionAndAnswer.put(elsIoT.getqID(), value);
             //send the questions and answers to the system in a set question
             if (comm.setQuestion(questionAndAnswer)) {
                 //SUCCESS
