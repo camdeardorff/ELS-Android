@@ -20,12 +20,9 @@ import com.els.button.R;
  */
 public class WebViewer extends AppCompatActivity {
     // instance variables set by calling activity
-    public String sheet;
-    public String id;
-    public String pin;
-    public String host;
 
-
+    private String url;
+ 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,20 +34,17 @@ public class WebViewer extends AppCompatActivity {
 
         Log.d("WebViewer", "In on create");
         Bundle bundle = getIntent().getExtras();
-        this.sheet = bundle.getString("sheet");
-        this.id = bundle.getString("id");
-        this.pin = bundle.getString("pin");
-        this.host = bundle.getString("host");
 
-        Log.d("WebViewer", "Sheet: " + sheet + ", id: " + id + ", pin: " + pin + ", host: " + host);
+        this.url = bundle.getString("url");
+        Log.d("WebViewer", "url: " + this.url);
 
-
-        WebView myWebView = (WebView) findViewById(R.id.webView);
-        myWebView.loadUrl(getDisplayClientLocation() + "?id=" + id + "&pin=" + pin + "&sheet=" + sheet + "#");
-        Log.d("WebViewer", "url: " + myWebView.getUrl());
-        myWebView.setWebViewClient(new ELSWebViewClient());
-        WebSettings webSettings = myWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
+        if (this.url != null) {
+            WebView myWebView = (WebView) findViewById(R.id.webView);
+            myWebView.loadUrl(url);//getDisplayClientLocation() + "?id=" + id + "&pin=" + pin + "&sheet=" + sheet + "#");
+            myWebView.setWebViewClient(new ELSWebViewClient());
+            WebSettings webSettings = myWebView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+        }
 
     }
 
@@ -95,15 +89,6 @@ public class WebViewer extends AppCompatActivity {
             return true;
         }
     }
-
-    private String getServerURL() {
-        return "http://" + host + ":8080/ContentServer/ContentServer";
-    }
-
-    private String getDisplayClientLocation() {
-        return "http://" + host + ":8091/DisplayClient/NewDisplay.html";
-    }
-
 }
 
 
