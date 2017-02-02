@@ -12,8 +12,10 @@ import android.widget.ListView;
 import com.els.button.Models.ELSEntity;
 import com.els.button.Models.ELSIoT;
 import com.els.button.Models.ELSLimri;
+import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.InventoryListAdapter;
 import com.els.button.Models.InventoryListAdapterDelegate;
+import com.els.button.Models.UrlBuilder;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
@@ -42,7 +44,6 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         // get the host ip address from the strings file
         hostIp = getString(R.string.HOST_IP);
         Log.d("ButtonView", "host ip from strings: " + hostIp);
-
         updateList();
     }
 
@@ -71,7 +72,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
             ELSRest rest = new ELSRest(hostIp, inventory.getInventoryID(), inventory.getPin());
             if (rest.login()) {
-                inventory.update(rest.getInventoryStatus(inventory.getStatusSheet()));
+                inventory.updateStatus(rest.getInventoryStatus(inventory.getStatusSheet()));
             }
         }
 
@@ -125,17 +126,20 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     }
 
     @Override
-    public void limriButtonWasPressedWithLimriInfo(ELSLimri elsLimri) {
-        Log.d("ButtonView","limriButtonWasPressedWithLimriInfo");
-        Intent intent = new Intent(this, WebViewer.class);
+    public void limriButtonWasPressedWithLimriInfo(ELSLimri elsLimri, ELSLimriButtonPressAction action) {
 
-        intent.putExtra("sheet", elsLimri.getStatusSheet());
-        intent.putExtra("id", elsLimri.getInventoryID());
-        intent.putExtra("pin", elsLimri.getPin());
-        Log.d("ButtonView", "putting host as: " + hostIp );
-        intent.putExtra("host", hostIp);
-        startActivity(intent);
+        UrlBuilder urlBuilder = new UrlBuilder(hostIp);
+        String url = urlBuilder.create(elsLimri, action);
 
+        Log.d("ButtonView", "url from url builder: " + url);
+
+        if (url != null) {
+            Log.d("ButtonView","limriButtonWasPressedWithLimriInfo");
+            Intent intent = new Intent(this, WebViewer.class);
+
+            intent.putExtra("url", url);
+            startActivity(intent);
+        }
     }
 
     @Override
