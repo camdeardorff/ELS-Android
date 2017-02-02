@@ -3,6 +3,12 @@ package com.els.button.Networking;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.els.button.Models.ELSLimriButtonPressAction;
+import com.els.button.Models.ELSLimriColor;
+import com.els.button.Networking.Models.ELSInventoryStatus;
+import com.els.button.Networking.Models.ELSInventoryStatusAction;
+import com.els.button.Networking.Models.ELSInventoryStatusAppearance;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -14,6 +20,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -25,6 +32,11 @@ import java.util.concurrent.ExecutionException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
@@ -254,6 +266,51 @@ public class ELSRest {
     }
 
 
+    public ELSInventoryStatus getInventoryStatus(String statusSheet) {
+
+        if (this.login()) {
+            Document sheet = this.getSheet(statusSheet);
+            Log.d("ELSRest", "status sheet: ");
+            System.out.println(convertDocumentToString(sheet));
+
+            String status = xPathForString(sheet, "//appearance/status/color");
+            Log.d("ELSRest", "appearance status: " + status);
+
+            String buttonText = xPathForString(sheet, "//appearance/button/text");
+            Log.d("ELSRest", "button text: " + buttonText);
+
+            String buttonColor = xPathForString(sheet, "//appearance/button/color");
+            Log.d("ELSRest", "button color: " + buttonColor);
+
+            ELSInventoryStatusAppearance appearance = new ELSInventoryStatusAppearance(status, buttonText, ELSLimriColor.fromStringLiteral(buttonColor));
+
+
+            String type = xPathForString(sheet, "//action/type");
+            Log.d("ELSRest", "action type: " + type);
+
+            String location = xPathForString(sheet, "//action/location");
+            Log.d("ELSRest", "actionLocation: " + location);
+
+
+            ELSInventoryStatusAction action = new ELSInventoryStatusAction(ELSLimriButtonPressAction.fromStringLiteral(type), location);
+
+
+            String title = xPathForString(sheet, "//title");
+            Log.d("ELSRest", "title: " + title);
+
+            String description = xPathForString(sheet, "//description");
+            Log.d("ELSRest", "description: " + description);
+
+            String nextStatusSheet = xPathForString(sheet, "//statusSheet");
+            Log.d("ELSRest", "nextStatusSheet: " + nextStatusSheet);
+
+            return new ELSInventoryStatus(title, description, nextStatusSheet, action, appearance);
+
+        } else {
+            return null;
+        }
+    }
+
 
     /**
      * Function: getXmlDocument - turns a string that resembles an xmldocument into an actual xml
@@ -314,6 +371,24 @@ public class ELSRest {
 
         return nl.item(0);
 
+    }
+
+    private static String convertDocumentToString(Document doc) {
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer;
+        try {
+            transformer = tf.newTransformer();
+            // below code to remove XML declaration
+            // transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            String output = writer.getBuffer().toString();
+            return output;
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     /**
