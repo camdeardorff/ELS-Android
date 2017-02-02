@@ -2,6 +2,8 @@ package com.els.button.Models;
 
 
 import android.content.Context;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -124,14 +126,18 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
             limriHolder.titleTextView.setText(limriData.title);
             limriHolder.descriptionTextView.setText(limriData.description);
             limriHolder.imageImageView.setImageResource(R.drawable.group_img);
-            limriHolder.button.setText(limriData.title);
+            limriHolder.button.setText(limriData.getButton().getTitle());
+                // TODO: find a color mapping that works... limriData.getButton().getColor()
+            Log.d("InventoryListAdapter", "button color found: " + limriData.getButton().getColor().toString() + ", code: " + limriData.getButton().getColor().getLiteralColor());
+//            limriHolder.button.setBackgroundColor(limriData.getButtonColor().getLiteralColor());
+            limriHolder.button.setBackgroundColor(ContextCompat.getColor(context, limriData.getButton().getColor().getLiteralColor()));
             //add an onclick listener to the button
             limriHolder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     //when it is clicked tell the delegate that this button was pressed. It will transition
                     //to another activity. This is the wrong layer to be doing that kind of stuff
-                    delegate.limriButtonWasPressedWithLimriInfo(limriData);
+                    delegate.limriButtonWasPressedWithLimriInfo(limriData, limriData.getButton().getAction());
                 }
             });
 
@@ -183,7 +189,6 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
                     buttonContainer.addView(button);
                 }
                 ioTHolder.buttons = buttonList;
-
 
 
                 //set the actual view's tag to be this holder. this way we can get the holder and reuse
