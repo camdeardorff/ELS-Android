@@ -10,6 +10,10 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.els.button.Models.ELSLimri;
+//import com.els.button.Models.ELSLimriButton;
+import com.els.button.Models.ELSLimriButton;
+import com.els.button.Models.ELSLimriButtonPressAction;
+import com.els.button.Models.ELSLimriColor;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
 
@@ -45,9 +49,16 @@ public class InventoryConfigurator extends AppCompatActivity {
                 if (!iid.isEmpty() && !pin.isEmpty()) {
                     ELSRest rest = new ELSRest(host, iid, pin);
                     if (rest.login()) {
+                        // create the new inventory
                         ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
+                        // create the button for this inventory and save it
+                        ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriButtonPressAction.NOTHING, "");
+                        newButton.save();
+                        // associate the button with the inventory and save
+                        newLimri.setButton(newButton);
                         newLimri.save();
-                        newLimri.update(rest.getInventoryStatus(newLimri.getStatusSheet()));
+
+                        newLimri.updateStatus(rest.getInventoryStatus(newLimri.getStatusSheet()));
                         Log.d("InventoryConfigurator", "saved new elslimri");
                         setResult(SUCCESSFUL_INVENTORY_CREATION);
                         finish();
