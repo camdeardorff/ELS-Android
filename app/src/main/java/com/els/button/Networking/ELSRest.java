@@ -42,6 +42,11 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+
 /**
  * Created by cameron on 2/16/16.
  * Class: ELSRest
@@ -66,6 +71,39 @@ public class ELSRest {
         this.id = id;
         this.pin = pin;
     }
+
+
+
+
+
+    public void testAsync() {
+        OkRequest request = new OkRequest(this.hostIP);
+        Log.d("TEST ASYNC", "execute now");
+        String command = "command=StartSession&sessionid=" + id + sessionID + "&inventoryid=" + id + "&pin=" + pin;
+
+        request.execute(command, new OkRequestCallback() {
+            @Override
+            public void onSuccess(String xml) {
+                Log.d("TEST ASYNC", "on success");
+                Document doc = getXmlDocument(xml);
+                Log.d("TEST ASYNC", "result: " + xPathForString(doc, "//reply/@result"));
+            }
+
+            @Override
+            public void onError() {
+                Log.d("TEST ASYNC", "on error");
+            }
+        });
+        Log.d("TEST ASYNC", "overrun execute");
+
+    }
+
+
+
+
+
+
+
 
     /**
      * Function - login - logs into the server with the given host address, id, and pin from the initializer.
@@ -282,7 +320,30 @@ public class ELSRest {
             String buttonColor = xPathForString(sheet, "//appearance/button/color");
             Log.d("ELSRest", "button color: " + buttonColor);
 
-            ELSInventoryStatusAppearance appearance = new ELSInventoryStatusAppearance(status, buttonText, ELSLimriColor.fromStringLiteral(buttonColor));
+            String buttonBorderColor = xPathForString(sheet, "//appearance/button/border/color");
+            Log.d("ELSRest", "button border color: " + buttonBorderColor);
+
+            String buttonBorderWidth = xPathForString(sheet, "//appearance/button/border/width");
+            if (buttonBorderWidth.equals("")) {
+                buttonBorderWidth = "-1";
+            }
+            Log.d("ELSRest", "button border width: " + buttonBorderWidth);
+
+
+            String buttonBorderRadius = xPathForString(sheet, "//appearance/button/border/radius");
+            if (buttonBorderRadius.equals("")) {
+                buttonBorderRadius = "-1";
+            }
+            Log.d("ELSRest", "button border radius: " + buttonBorderRadius);
+
+
+
+            ELSInventoryStatusAppearance appearance = new ELSInventoryStatusAppearance(status,
+                    buttonText,
+                    ELSLimriColor.fromStringLiteral(buttonColor),
+                    ELSLimriColor.fromStringLiteral(buttonBorderColor),
+                    Integer.parseInt(buttonBorderWidth),
+                    Integer.parseInt(buttonBorderRadius));
 
 
             String type = xPathForString(sheet, "//action/type");
@@ -327,7 +388,7 @@ public class ELSRest {
         try {
             //make a new builder from the factory
             builder = factory.newDocumentBuilder();
-            //create the document with the biilder and the xmlString parameter
+            //create the document with the builder and the xmlString parameter
             doc = builder.parse(new InputSource(new StringReader(xmlString)));
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
@@ -482,4 +543,55 @@ public class ELSRest {
             return returnString;
         }
     }//end private inner class REQUEST
+
+
+    private interface OkRequestCallback {
+        void onSuccess(String xml);
+        void onError();
+    }
+
+    private class OkRequest {
+        private String hostIP;
+
+        OkRequest(String hostIP) {
+            this.hostIP = hostIP;
+        }
+
+        public void execute(String command, final OkRequestCallback callback) {
+
+
+            OkHttpClient client = new OkHttpClient();
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url("http://" + hostIP + ":8080/ContentServer/ContentServer?" + command)
+                    .build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    e.printStackTrace();
+                    callback.onError();
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+
+                    BufferedReader br = new BufferedReader(response.body().charStream());
+                    String line;
+                    StringBuilder responseOutput = new StringBuilder();
+
+                    //go line by line through the buffer and keep adding onto the string builder
+                    while ((line = br.readLine()) != null) {
+                        responseOutput.append(line);
+                    }
+                    //close the buffer and set the returns string to the final built string
+                    br.close();
+                    String returnString = responseOutput.toString();
+
+                    callback.onSuccess(returnString);
+                }
+            });
+        }
+    }
 }//end public outer class ELSREST
