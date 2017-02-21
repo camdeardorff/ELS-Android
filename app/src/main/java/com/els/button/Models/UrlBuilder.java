@@ -1,7 +1,5 @@
 package com.els.button.Models;
 
-import android.util.Log;
-
 /**
  * Created by Cam on 1/26/17.
  */
@@ -16,7 +14,6 @@ public class UrlBuilder {
 
     public String create(ELSLimri limriData, ELSLimriButtonPressAction action) {
         String url = null;
-        Log.d("URLBuilder", "action given: " + action.toString());
         switch (action) {
             case LOADSHEET:
                 url = getDisplayClientLocation() + "?id=" + limriData.getInventoryID() + "&pin=" + limriData.getPin() + "&sheet=" + limriData.getButton().getLocation() + "#";

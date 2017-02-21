@@ -1,6 +1,8 @@
 package com.els.button.Controllers;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -10,16 +12,21 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.els.button.Models.ELSLimri;
-//import com.els.button.Models.ELSLimriButton;
 import com.els.button.Models.ELSLimriButton;
 import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.ELSLimriColor;
 import com.els.button.Networking.ELSRest;
+import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.R;
+
+import org.w3c.dom.Document;
+
+//import com.els.button.Models.ELSLimriButton;
 
 public class InventoryConfigurator extends AppCompatActivity {
 
     final int SUCCESSFUL_INVENTORY_CREATION = 1;
+    final int UNSUCCESSFUL_INVENTORY_CREATION = 0;
     final int CANCELED_INVENTORY_CREATION_REQUEST = 0;
 
     @Override
@@ -40,48 +47,77 @@ public class InventoryConfigurator extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                String iid = iidTextView.getText().toString();
-                String pin = pinTextView.getText().toString();
+                final String iid = iidTextView.getText().toString();
+                final String pin = pinTextView.getText().toString();
 
                 Log.d("InventoryConfigurator", "iid: " + iid);
                 Log.d("InventoryConfigurator", "pin: " + pin);
 
+
+                // Get a handler that can be used to post to the main thread
+                final Handler mainHandler = new Handler(getMainLooper());
+
                 if (!iid.isEmpty() && !pin.isEmpty()) {
-                    ELSRest rest = new ELSRest(host, iid, pin);
-                    if (rest.login()) {
-                        // create the new inventory
-                        ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
-                        // create the button for this inventory and save it
-                        ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriButtonPressAction.NOTHING, "");
-                        newButton.save();
-                        // associate the button with the inventory and save
-                        newLimri.setButton(newButton);
-                        newLimri.save();
+                    final ELSRest rest = new ELSRest(host, iid, pin);
 
-                        newLimri.updateStatus(rest.getInventoryStatus(newLimri.getStatusSheet()));
-                        Log.d("InventoryConfigurator", "saved new elslimri");
-                        setResult(SUCCESSFUL_INVENTORY_CREATION);
-                        finish();
-                    } else {
-                        // 1. Instantiate an AlertDialog.Builder with its constructor
-                        AlertDialog.Builder builder = new AlertDialog.Builder(InventoryConfigurator.this);
+                    rest.login(new ELSRestRequestCallback() {
+                        @Override
+                        public void onSuccess(Document document, Boolean result) {
 
-                        // 2. Chain together various setter methods to set the dialog characteristics
-                        builder.setMessage(R.string.activity_inventory_configurator_alert_message)
-                                .setTitle(R.string.activity_inventory_configurator_alert_title);
+                            if (result) {
+                                // create the new inventory
+                                final ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
+                                // create the button for this inventory and save it
+                                ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", ELSLimriColor.BLACK, 1, 1);
+                                newButton.save();
+                                // associate the button with the inventory and save
+                                newLimri.setButton(newButton);
+                                newLimri.save();
 
-                        // 3. Get the AlertDialog from create()
-                        AlertDialog dialog = builder.create();
-                        dialog.show();
+                                newLimri.updateStatus(host, new Handler.Callback() {
+                                    @Override
+                                    public boolean handleMessage(Message message) {
 
-                    }
+                                        Runnable myRunnable = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                newLimri.save();
+                                                Log.d("InventoryConfigurator", "saved new elslimri");
+                                                exit(SUCCESSFUL_INVENTORY_CREATION);
+                                            }
+                                        };
+                                        mainHandler.post(myRunnable);
+                                        return false;
+                                    }
+                                });
 
+                            } else {
+                                Runnable myRunnable = new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        showFailureMessage();
+                                    }
+                                };
+                                mainHandler.post(myRunnable);
+                            }
+                        }
+
+
+                        @Override
+                        public void onFailure() {
+                            Runnable myRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    showFailureMessage();
+                                }
+                            };
+                            mainHandler.post(myRunnable);
+                        }
+                    });
                 } else {
                     // report errors
                     Log.d("InventoryConfigurator", "iid and pin are empty");
                 }
-
-
             }
         });
 
@@ -94,4 +130,23 @@ public class InventoryConfigurator extends AppCompatActivity {
             }
         });
     }
+
+    private void showFailureMessage() {
+        // 1. Instantiate an AlertDialog.Builder with its constructor
+        AlertDialog.Builder builder = new AlertDialog.Builder(InventoryConfigurator.this);
+
+        // 2. Chain together various setter methods to set the dialog characteristics
+        builder.setMessage(R.string.activity_inventory_configurator_alert_message)
+                .setTitle(R.string.activity_inventory_configurator_alert_title);
+
+        // 3. Get the AlertDialog from create()
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void exit(Integer result) {
+        setResult(result);
+        finish();
+    }
+
 }

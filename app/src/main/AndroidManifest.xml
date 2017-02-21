@@ -13,8 +13,9 @@
         android:name=".Start">
         <activity
             android:name=".Controllers.ButtonView"
-            android:label="ELS-ButtonView"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:label="@string/activity_button_view_label"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:configChanges="orientation|screenSize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

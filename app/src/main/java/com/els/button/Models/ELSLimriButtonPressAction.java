@@ -1,7 +1,5 @@
 package com.els.button.Models;
 
-import android.util.Log;
-
 /**
  * Created by Cam on 1/24/17.
  */
@@ -22,7 +20,6 @@ public enum ELSLimriButtonPressAction {
     }
 
     static public ELSLimriButtonPressAction fromStringLiteral(String stringLiteral) {
-        Log.d("ELSLimriButtonPress...", "string literal given: " + stringLiteral);
         if (stringLiteral.equals("loadSheet")) {
             return LOADSHEET;
         } else if (stringLiteral.equals("loadURL")) {

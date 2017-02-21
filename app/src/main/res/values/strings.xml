@@ -5,7 +5,13 @@
     <string name="action_refresh">Refresh</string>
     <string name="action_create_new">New</string>
 
-    <string name="HOST_IP">10.148.49.23</string>
+    <string name="HOST_IP">10.148.50.200</string>
+
+
+
+    <!-- activity ButtonView -->
+    <string name="activity_button_view_label">Inventories</string>
+
 
     <!-- activity InventoryConfigurator -->
     <string name="title_activity_inventory_configurator">Inventory Configurator</string>
@@ -13,6 +19,6 @@
     <string name="activity_inventory_configurator_textfield_pin">Inventory Pin</string>
     <string name="activity_inventory_configurator_button_cancel">Cancel</string>
     <string name="activity_inventory_configurator_button_done">Done</string>
-    <string name="activity_inventory_configurator_alert_title">Title</string>
-    <string name="activity_inventory_configurator_alert_message">Message</string>
+    <string name="activity_inventory_configurator_alert_title">Warning</string>
+    <string name="activity_inventory_configurator_alert_message">Incorrect ID or PIN. Please verify your credentials before proceeding.</string>
 </resources>

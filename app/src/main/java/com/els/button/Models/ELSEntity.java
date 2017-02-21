@@ -1,7 +1,5 @@
 package com.els.button.Models;
 
-import android.util.Log;
-
 import com.els.button.Database.AppDatabase;
 import com.els.button.Networking.Models.ELSInventoryStatus;
 import com.raizlabs.android.dbflow.annotation.Column;
@@ -60,7 +58,6 @@ public class ELSEntity extends BaseModel {
     }
 
     public void updateStatus(ELSInventoryStatus status) {
-        Log.d("ELSEntity", "updateStatus");
         if (status.getTitle() != null && status.getTitle() != "") {
             this.setTitle(status.getTitle());
         }
@@ -68,8 +65,6 @@ public class ELSEntity extends BaseModel {
             this.setDescription(status.getDescription());
         }
         this.save();
-        Log.d("ELSEntity", "after updateStatus: title: " + this.getTitle() + ", description: " + this.getDescription());
-
     }
 
     public String getDescription() {

@@ -4,6 +4,7 @@
     <color name="colorPrimaryDark">#0C4A5D</color>
     <color name="colorAccent">#C12440</color>
 
+    <color name="limri_white">#ffffff</color>
     <color name="limri_black">#231F20</color>
     <color name="limri_dark_blue">#0C4A5D</color>
     <color name="limri_light_blue">#10A3BC</color>
@@ -13,5 +14,5 @@
     <color name="limri_red">#C12440</color>
     <color name="limri_yellow">#FDC43E</color>
     <color name="limri_green">#5cb85c</color>
-    
+
 </resources>

@@ -33,10 +33,12 @@ dependencies {
     compile 'com.google.android.gms:play-services-appindexing:8.1.0'
     testCompile 'junit:junit:4.12'
 
-    annotationProcessor "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
 
+    // database using dbflow (abstracts sqlite
     compile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflow_version}"
     compile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
+    annotationProcessor "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
 
-
+    // networking library okhttp
+    compile 'com.squareup.okhttp3:okhttp:3.6.0'
 }

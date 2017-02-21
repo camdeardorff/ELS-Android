@@ -1,10 +1,11 @@
 package com.els.button.Networking;
 
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.ELSLimriColor;
+import com.els.button.Networking.Callbacks.ELSRestInventoryStatusRequestCallback;
+import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.Models.ELSInventoryStatus;
 import com.els.button.Networking.Models.ELSInventoryStatusAction;
 import com.els.button.Networking.Models.ELSInventoryStatusAppearance;
@@ -16,23 +17,18 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -59,185 +55,125 @@ public class ELSRest {
     private String pin;
     //TODO: make this truly a random session id
     String sessionID = "0987654321";
+    public Boolean loggedIn;
 
     /**
      * Initializer - initilizes ELSRest object
+     *
      * @param host - the ip address of the server
-     * @param id - the inventory id for the account
-     * @param pin - the corresponding pin to the inventory id
+     * @param id   - the inventory id for the account
+     * @param pin  - the corresponding pin to the inventory id
      */
     public ELSRest(String host, String id, String pin) {
         this.hostIP = host;
         this.id = id;
         this.pin = pin;
+        this.loggedIn = false;
     }
 
 
+    private void log(final Boolean login, final ELSRestRequestCallback callback) {
+        // TODO: integrate into url builder
+        String command;
+        if (login) {
+            command = "command=StartSession&sessionid=" + id + sessionID + "&inventoryid=" + id + "&pin=" + pin;
+        } else {
+            command = "command=EndSession&sessionid=" + id + sessionID + "&inventoryid=" + id + "&pin=" + pin;
+        }
 
-
-
-    public void testAsync() {
+//        Log.d("ELSRest", "command: " + command);
         OkRequest request = new OkRequest(this.hostIP);
-        Log.d("TEST ASYNC", "execute now");
-        String command = "command=StartSession&sessionid=" + id + sessionID + "&inventoryid=" + id + "&pin=" + pin;
-
         request.execute(command, new OkRequestCallback() {
             @Override
             public void onSuccess(String xml) {
-                Log.d("TEST ASYNC", "on success");
+                //create a document with the string result from the request
                 Document doc = getXmlDocument(xml);
-                Log.d("TEST ASYNC", "result: " + xPathForString(doc, "//reply/@result"));
+                //xpath into the document to get the response from the result attribute (see loginResponsePath)
+                String loginResponsePath = "//reply/@result";
+                String result = xPathForString(doc, loginResponsePath);
+
+                Boolean success = result.equals("success");
+
+                //if successful the value will be "success"
+                callback.onSuccess(doc, success);
             }
 
             @Override
             public void onError() {
-                Log.d("TEST ASYNC", "on error");
+                callback.onFailure();
             }
         });
-        Log.d("TEST ASYNC", "overrun execute");
-
     }
 
-
-
-
-
-
-
-
-    /**
-     * Function - login - logs into the server with the given host address, id, and pin from the initializer.
-     * @return - boolean - returns true if the login attempt was successful. False if it was unsuccessful
-     */
-    public boolean login() {
-        //plug and play string for the params
-        String command = "command=StartSession&sessionid=" + id + sessionID + "&inventoryid=" + id + "&pin=" + pin;
-
-        //create new request to the server and execute with the command
-        Request request = new Request(hostIP);
-        request.execute(command);
-
-        //create a string initialized to null before trying to get the value
-        //request.get() can cause an exception. Try for the value and deal with exceptions
-        String xmlString = null;
-        try {
-            xmlString = request.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        if (xmlString != null) {
-
-
-            //create a document with the string result from the request
-            Document xml = getXmlDocument(xmlString);
-            //xpath into the document to get the response from the result attribute (see loginResponsePath)
-            String loginResponsePath = "//reply/@result";
-            String result = xPathForString(xml, loginResponsePath);
-
-            //if successful the value will be "success"
-            if (result.equals("success")) {
-                return true;
-            }
-        }
-        return false;
+    public void login(final ELSRestRequestCallback callback) {
+        log(true, callback);
     }
 
-
-    /**
-     * Logs the user out of the server.
-     * @return true for a successful attempt and false for unsuccessful.
-     */
-    public boolean logout() {
-        //plug and play string for the params
-        String command = "command=StartSession&sessionid=" + id + sessionID + "&inventoryid=" + id + "&pin=" + pin;
-
-        //create new request object to the server and execute with the command
-        Request request = new Request(hostIP);
-        request.execute(command);
-
-        //create a string initialized to null before trying to get the value
-        //request.get() can cause an exception. Try for the value and deal with exceptions
-        String xmlString = null;
-        try {
-            xmlString = request.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        if (xmlString != null) {
-
-            //create a document with the string result from the request
-            Document xml = getXmlDocument(xmlString);
-            //xpath into the document to get the response from the result attribute (see loginResponsePath)
-            String loginResponsePath = "//reply/@result";
-            String result = xPathForString(xml, loginResponsePath);
-
-            //if successful the value will be "success"
-            Log.d("ELSRest", "logout result is: " + result);
-            if (result.equals("success")) {
-                return true;
-            }
-        }
-        return false;
+    public void logout(final ELSRestRequestCallback callback) {
+        log(false, callback);
     }
+
 
     /**
      * Sends a request to the server to get a sheet using the id and pin given at initialization. On
      * server reply the reply is processed into a document and returned.
+     *
      * @param sheetName - sheet to retrieve from the server.
      * @return A document from the server with a corresponding sheetName
      */
-    public Document getSheet(String sheetName) {
+    public void getSheet(String sheetName, final ELSRestRequestCallback callback) {
 
         //plug and play string for the params
         String command = "command=Sheet&sessionid=" + id + sessionID + "&args={\"sheet\":\"" + sheetName + "\"}";
 
-        //create new request object to the server and execute with the command
-        Request request = new Request(hostIP);
-        request.execute(command);
 
-        //create a string initialized to null before trying to get the value
-        //request.get() can cause an exception. Try for the value and deal with exceptions
-        String xmlString = null;
-        try {
-            xmlString = request.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
+        OkRequest request = new OkRequest(hostIP);
+        request.execute(command, new OkRequestCallback() {
+            @Override
+            public void onSuccess(String xml) {
+                //create a document with the string result from the request
+                Document doc = getXmlDocument(xml);
+                //xpath into the document to get the response from the result attribute (see loginResponsePath)
+                String loginResponsePath = "//reply/@result";
+                String result = xPathForString(doc, loginResponsePath);
 
-        //create a document with the string result from the request
-        Document xml = getXmlDocument(xmlString);
-        //xpath into the document to get the response from the result attribute (see loginResponsePath)
-        return xml;
+                //if successful the value will be "success"
+                callback.onSuccess(doc, result.equals("success"));
+            }
+
+            @Override
+            public void onError() {
+                callback.onFailure();
+            }
+        });
+
     }
 
-    public Node getQuestion(String sheetName, String qID) {
-        Document sheet = getSheet(sheetName);
-//        String result = xPathForString(sheet, "//item[@id='" + qID + "']");
-//        Log.d("ELSRest","result from getQuestion is: " + result);
-
-        return xPathForNode(sheet, "//item[@id='" + qID + "']");
-//        sheet.getElementById(qID);
-//        return sheet.getFirstChild();
-    }
-
+//    public Node getQuestion(String sheetName, String qID) {
+//
+//        getSheet(sheetName, new ELSRestRequestCallback() {
+//            @Override
+//            public void onSuccess(Document document, Boolean result) {
+//                return xPathForNode(document, "//item[@id='" + qID + "']");
+//            }
+//
+//            @Override
+//            public void onFailure() {
+//
+//            }
+//        });
+//    }
 
 
     /**
      * Sends a post to the server to set a question id in the database to a value.
+     *
      * @param qidsAndResponses - a map key value pairs where the keys are the question ids and the value
      *                         is the value to set that question id to.
      * @return returns a boolean value in accordance with the success of the post. success = true.
      * @test use a map with just "qW201D1", "2" as the values. it works!
      */
-    public boolean setQuestion(HashMap<String, String> qidsAndResponses) {
+    public void setQuestion(HashMap<String, String> qidsAndResponses, final ELSRestRequestCallback callback) {
 
         //make sure we are not sending something that is sure not to work
         if (!qidsAndResponses.isEmpty()) {
@@ -271,111 +207,103 @@ public class ELSRest {
             String command = "command=SetQuestions&sessionid=" + id + sessionID + "&args={\"questionids\":" + qids + ",\"responses\":" + responses + "}";
             Log.d("ELSRest", command);
 
-            //create new request object to the server and execute with the command
-            Request request = new Request(hostIP);
-            request.execute(command);
+            OkRequest request = new OkRequest(this.hostIP);
+            request.execute(command, new OkRequestCallback() {
+                @Override
+                public void onSuccess(String xml) {
+                    //create a document with the string result from the request
+                    Document doc = getXmlDocument(xml);
+                    //xpath into the document to get the response from the result attribute (see loginResponsePath)
+                    String loginResponsePath = "//reply/@result";
+                    String result = xPathForString(doc, loginResponsePath);
 
-            //create a string initialized to null before trying to get the value
-            //request.get() can cause an exception. Try for the value and deal with exceptions
-            String xmlString = null;
-            try {
-                xmlString = request.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+                    //if successful the value will be "success"
+                    callback.onSuccess(doc, result.equals("success"));
+                }
 
-            Log.d("ELSRest", xmlString);
-            //create a document with the string result from the request
-            Document xml = getXmlDocument(xmlString);
-
-            //xpath into the document to get the response from the result attribute (see loginResponsePath)
-            String loginResponsePath = "//reply/@result";
-            String result = xPathForString(xml, loginResponsePath);
-
-            //if successful the value will be "success"
-            Log.d("ELSRest", "setQuestion result is: " + result);
-            if (result.equals("success")) {
-                return true;
-            }
+                @Override
+                public void onError() {
+                    callback.onFailure();
+                }
+            });
+        } else {
+            callback.onFailure();
         }
-        return false;
     }
 
+    /**
+     * Gets the status sheet for an inventory and gets the inventory status specific information to update
+     * the local state.
+     *
+     * @param statusSheet: sheet name to request
+     * @param callback:    ELSRestInventoryStatusRequestCallback to tell the caller what the result of the request was.
+     */
+    public void getInventoryStatus(String statusSheet, final ELSRestInventoryStatusRequestCallback callback) {
 
-    public ELSInventoryStatus getInventoryStatus(String statusSheet) {
+        // get the status sheet
+        this.getSheet(statusSheet, new ELSRestRequestCallback() {
+            @Override
+            public void onSuccess(Document document, Boolean result) {
+                if (result) {
 
-        if (this.login()) {
-            Document sheet = this.getSheet(statusSheet);
-            Log.d("ELSRest", "status sheet: ");
-            System.out.println(convertDocumentToString(sheet));
 
-            String status = xPathForString(sheet, "//appearance/status/color");
-            Log.d("ELSRest", "appearance status: " + status);
+                    String testDescription = xPathForSubtreeString(document, "//description");
+                    Log.d("ELSRest", testDescription);
 
-            String buttonText = xPathForString(sheet, "//appearance/button/text");
-            Log.d("ELSRest", "button text: " + buttonText);
+                    // get appearance info
+                    String status = xPathForString(document, "//appearance/status/color");
+                    String buttonText = xPathForString(document, "//appearance/button/title/text");
+                    String buttonTextColor = xPathForString(document, "//appearance/button/title/color");
+                    String buttonColor = xPathForString(document, "//appearance/button/color");
+                    String buttonBorderColor = xPathForString(document, "//appearance/button/border/color");
+                    // get the border width
+                    String buttonBorderWidth = xPathForString(document, "//appearance/button/border/width");
+                    if (buttonBorderWidth.equals("")) {
+                        buttonBorderWidth = "-1";
+                    }
+                    // get the border radius
+                    String buttonBorderRadius = xPathForString(document, "//appearance/button/border/radius");
+                    if (buttonBorderRadius.equals("")) {
+                        buttonBorderRadius = "-1";
+                    }
+                    // put together all of the appearance data
+                    ELSInventoryStatusAppearance appearance = new ELSInventoryStatusAppearance(
+                            status,
+                            buttonText,
+                            ELSLimriColor.fromStringLiteral(buttonTextColor),
+                            ELSLimriColor.fromStringLiteral(buttonColor),
+                            ELSLimriColor.fromStringLiteral(buttonBorderColor),
+                            Integer.parseInt(buttonBorderWidth),
+                            Integer.parseInt(buttonBorderRadius));
+                    // get action data
+                    String type = xPathForString(document, "//action/type");
+                    String location = xPathForString(document, "//action/location");
 
-            String buttonColor = xPathForString(sheet, "//appearance/button/color");
-            Log.d("ELSRest", "button color: " + buttonColor);
+                    ELSInventoryStatusAction action = new ELSInventoryStatusAction(ELSLimriButtonPressAction.fromStringLiteral(type), location);
+                    String title = xPathForString(document, "//title");
+                    String description = xPathForSubtreeString(document, "//description");
+                    Log.d("ELSRest", "description found: " + description);
+                    String nextStatusSheet = xPathForString(document, "//statusSheet");
 
-            String buttonBorderColor = xPathForString(sheet, "//appearance/button/border/color");
-            Log.d("ELSRest", "button border color: " + buttonBorderColor);
-
-            String buttonBorderWidth = xPathForString(sheet, "//appearance/button/border/width");
-            if (buttonBorderWidth.equals("")) {
-                buttonBorderWidth = "-1";
+                    callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, action, appearance));
+                } else {
+                    // the request was successful but it's message was bad
+                    callback.onFailure();
+                }
             }
-            Log.d("ELSRest", "button border width: " + buttonBorderWidth);
 
-
-            String buttonBorderRadius = xPathForString(sheet, "//appearance/button/border/radius");
-            if (buttonBorderRadius.equals("")) {
-                buttonBorderRadius = "-1";
+            @Override
+            public void onFailure() {
+                callback.onFailure();
             }
-            Log.d("ELSRest", "button border radius: " + buttonBorderRadius);
-
-
-
-            ELSInventoryStatusAppearance appearance = new ELSInventoryStatusAppearance(status,
-                    buttonText,
-                    ELSLimriColor.fromStringLiteral(buttonColor),
-                    ELSLimriColor.fromStringLiteral(buttonBorderColor),
-                    Integer.parseInt(buttonBorderWidth),
-                    Integer.parseInt(buttonBorderRadius));
-
-
-            String type = xPathForString(sheet, "//action/type");
-            Log.d("ELSRest", "action type: " + type);
-
-            String location = xPathForString(sheet, "//action/location");
-            Log.d("ELSRest", "actionLocation: " + location);
-
-
-            ELSInventoryStatusAction action = new ELSInventoryStatusAction(ELSLimriButtonPressAction.fromStringLiteral(type), location);
-
-
-            String title = xPathForString(sheet, "//title");
-            Log.d("ELSRest", "title: " + title);
-
-            String description = xPathForString(sheet, "//description");
-            Log.d("ELSRest", "description: " + description);
-
-            String nextStatusSheet = xPathForString(sheet, "//statusSheet");
-            Log.d("ELSRest", "nextStatusSheet: " + nextStatusSheet);
-
-            return new ELSInventoryStatus(title, description, nextStatusSheet, action, appearance);
-
-        } else {
-            return null;
-        }
+        });
     }
 
 
     /**
      * Function: getXmlDocument - turns a string that resembles an xmldocument into an actual xml
      * document.
+     *
      * @param xmlString - this string should resemble an xmldocument in its string form
      * @return XML Document corresponding to the string passed in.
      */
@@ -403,7 +331,8 @@ public class ELSRest {
     /**
      * Function - xPath - function to do xpaths on an xml document. reduces a whole lot of repeated
      * code.
-     * @param doc - xml document to find values in
+     *
+     * @param doc  - xml document to find values in
      * @param path - a path to test on the document in string form
      * @return the corresponding value the path points to in the document.
      */
@@ -431,6 +360,38 @@ public class ELSRest {
         }
 
         return nl.item(0);
+    }
+
+    public String xPathForSubtreeString(Document document, String path){
+
+        XPathFactory xpFactory = XPathFactory.newInstance();
+        XPath xPath = xpFactory.newXPath();
+        Node node = null;
+        try {
+            node = (Node) xPath.evaluate(path, document, XPathConstants.NODE);
+        } catch (XPathExpressionException e) {
+
+        }
+        StringWriter sw = new StringWriter();
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer = null;
+        try {
+            transformer = tf.newTransformer();
+        } catch (TransformerConfigurationException e) {
+            e.printStackTrace();
+        }
+        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+        try {
+            transformer.transform(new DOMSource(node), new StreamResult(sw));
+        } catch (TransformerException e) {
+            e.printStackTrace();
+        }
+        return sw.toString();
 
     }
 
@@ -452,101 +413,10 @@ public class ELSRest {
         return null;
     }
 
-    /**
-     * Class: Request - sends requests to a server and gets replies. Extends AsyncTask
-     */
-    private class Request extends AsyncTask<String, Void, String> {
-        private String hostIP;
-
-        /**
-         * Initializer
-         * @param hostIP - the ip address to send the request to
-         */
-        Request(String hostIP) {
-            this.hostIP = hostIP;
-        }
-
-
-        @Override
-        protected String doInBackground(String... strings) {
-            //send a request to the server with the first string parameter
-            String reply = sendRequest(strings[0]);
-            //if the reply is empty print an error.
-            //TODO: notify the user to connect to the internet. Consider a reachability on startp
-            if (reply == null) {
-                Log.d("Request", "This is an error saying that there is no xml, check the ip address string");
-            }
-            return reply;
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-        }
-
-
-        /**
-         * Function: sendRequest - sends an http request to the host given in the initializer with
-         * url parameters provided. It then returns the string value of the request.
-         * @param urlParameters - the url parameters to send to the server.
-         * @return string value of the response back from the server.
-         */
-        private String sendRequest(String urlParameters) {
-            //try catch with creating a new url.
-            URL url = null;
-            try {
-                //prepared string to go to host address's content server
-                url = new URL("http://" + hostIP + ":8080/ContentServer/ContentServer");
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-
-            //create return string before entering the try catch
-            String returnString = null;
-
-            try {
-                Log.d("Request", "Url is: " + url);
-                //create http connection object with an open connection
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                //set the request method to post
-                connection.setRequestMethod("POST");
-                connection.setDoOutput(true);
-                //create a data stream with the output stream from the connection's request
-                DataOutputStream dStream = new DataOutputStream(connection.getOutputStream());
-                dStream.writeBytes(urlParameters);
-                //tidy up the stream
-                dStream.flush();
-                dStream.close();
-                //not used but useful for debugging
-                int responseCode = connection.getResponseCode();
-
-                //read the info in through the buffer, intialize a new string and create a string builder
-                BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String line = "";
-                StringBuilder responseOutput = new StringBuilder();
-
-                //go line by line through the buffer and keep adding onto the string builder
-                while ((line = br.readLine()) != null) {
-                    responseOutput.append(line);
-                }
-                //close the buffer and set the returns string to the final built string
-                br.close();
-                returnString = responseOutput.toString();
-
-                //catch any exceptions and print
-            } catch (ProtocolException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            return returnString;
-        }
-    }//end private inner class REQUEST
-
 
     private interface OkRequestCallback {
         void onSuccess(String xml);
+
         void onError();
     }
 
@@ -559,11 +429,14 @@ public class ELSRest {
 
         public void execute(String command, final OkRequestCallback callback) {
 
+            Log.d("OkRequest", "execute");
 
             OkHttpClient client = new OkHttpClient();
             okhttp3.Request request = new okhttp3.Request.Builder()
                     .url("http://" + hostIP + ":8080/ContentServer/ContentServer?" + command)
                     .build();
+
+            Log.d("OkRequest", "request built " + request.toString());
 
             client.newCall(request).enqueue(new Callback() {
                 @Override
@@ -574,7 +447,8 @@ public class ELSRest {
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
-                    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+                    if (!response.isSuccessful())
+                        throw new IOException("Unexpected code " + response);
 
 
                     BufferedReader br = new BufferedReader(response.body().charStream());
@@ -588,7 +462,7 @@ public class ELSRest {
                     //close the buffer and set the returns string to the final built string
                     br.close();
                     String returnString = responseOutput.toString();
-
+                    Log.d("ELSRest", returnString);
                     callback.onSuccess(returnString);
                 }
             });

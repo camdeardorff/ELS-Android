@@ -2,6 +2,7 @@ package com.els.button.Models;
 
 
 import android.content.Context;
+import android.graphics.drawable.GradientDrawable;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -125,13 +126,26 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
             //set the title, description, image, and button to the correct values
             limriHolder.titleTextView.setText(limriData.title);
             limriHolder.descriptionTextView.setText(limriData.description);
+            Log.d("InventoryListAdapter", "start description");
+            Log.d("InventoryListAdapter", limriData.description);
             limriHolder.imageImageView.setImageResource(R.drawable.group_img);
             limriHolder.button.setText(limriData.getButton().getTitle());
+            limriHolder.button.setTextColor(ContextCompat.getColor(context, limriData.getButton().getTextColor().getLiteralColor()));
                 // TODO: find a color mapping that works... limriData.getButton().getColor()
-            Log.d("InventoryListAdapter", "button color found: " + limriData.getButton().getColor().toString() + ", code: " + limriData.getButton().getColor().getLiteralColor());
 //            limriHolder.button.setBackgroundColor(limriData.getButtonColor().getLiteralColor());
             limriHolder.button.setBackgroundColor(ContextCompat.getColor(context, limriData.getButton().getColor().getLiteralColor()));
             //add an onclick listener to the button
+
+            GradientDrawable gd = new GradientDrawable();
+            gd.setCornerRadius(limriData.getButton().getBorderRadius());
+            gd.setColor(ContextCompat.getColor(context, limriData.getButton().getBorderColor().getLiteralColor()));
+            limriHolder.button.setShadowLayer(5, 3, 3, R.color.limri_black);
+
+
+
+            limriHolder.button.setBackground(gd);
+
+
             limriHolder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

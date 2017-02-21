@@ -25,11 +25,22 @@ public class ELSLimriButton extends BaseModel {
     private ELSLimriColor color;
 
     @Column
+    private ELSLimriColor textColor;
+
+    @Column
     private ELSLimriButtonPressAction action;
 
     @Column
     private String location;
 
+    @Column
+    private ELSLimriColor borderColor;
+
+    @Column
+    private Integer borderWidth;
+
+    @Column
+    private Integer borderRadius;
 
     public ELSLimriButton() {
         this.title = "";
@@ -37,11 +48,15 @@ public class ELSLimriButton extends BaseModel {
         this.action = ELSLimriButtonPressAction.NOTHING;
     }
 
-    public ELSLimriButton(String title, ELSLimriColor color, ELSLimriButtonPressAction action, String location) {
+    public ELSLimriButton(String title, ELSLimriColor color, ELSLimriColor textColor, ELSLimriButtonPressAction action, String location, ELSLimriColor borderColor, Integer borderWidth, Integer borderRadius) {
         this.title = title;
         this.color = color;
+        this.textColor = textColor;
         this.action = action;
         this.location = location;
+        this.borderColor = borderColor;
+        this.borderWidth = borderWidth;
+        this.borderRadius = borderRadius;
     }
 
     public void updateAction(ELSInventoryStatusAction actionStatus) {
@@ -53,6 +68,7 @@ public class ELSLimriButton extends BaseModel {
                 this.setLocation(actionStatus.getLocation());
             }
         }
+        this.save();
     }
 
     public void updateAppearance(ELSInventoryStatusAppearance appearanceStatus) {
@@ -60,10 +76,23 @@ public class ELSLimriButton extends BaseModel {
             if (appearanceStatus.getButtonColor() != null) {
                 this.setColor(appearanceStatus.getButtonColor());
             }
+            if (appearanceStatus.getButtonTextColor() != null) {
+                this.setTextColor(appearanceStatus.getButtonTextColor());
+            }
+            if (appearanceStatus.getButtonBorderColor() != null) {
+                this.setBorderColor(appearanceStatus.getButtonColor());
+            }
             if (!appearanceStatus.getButtonText().equals("")) {
                 this.setTitle(appearanceStatus.getButtonText());
             }
+            if (appearanceStatus.getButtonBorderWidth() > -1) {
+                this.setBorderWidth(appearanceStatus.getButtonBorderWidth());
+            }
+            if (appearanceStatus.getButtonBorderRadius() > -1) {
+                this.setBorderRadius(appearanceStatus.getButtonBorderRadius());
+            }
         }
+        this.save();
     }
 
     public String getTitle() {
@@ -96,5 +125,37 @@ public class ELSLimriButton extends BaseModel {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public ELSLimriColor getBorderColor() {
+        return borderColor;
+    }
+
+    public void setBorderColor(ELSLimriColor borderColor) {
+        this.borderColor = borderColor;
+    }
+
+    public Integer getBorderWidth() {
+        return borderWidth;
+    }
+
+    public void setBorderWidth(Integer borderWidth) {
+        this.borderWidth = borderWidth;
+    }
+
+    public Integer getBorderRadius() {
+        return borderRadius;
+    }
+
+    public void setBorderRadius(Integer borderRadius) {
+        this.borderRadius = borderRadius;
+    }
+
+    public ELSLimriColor getTextColor() {
+        return textColor;
+    }
+
+    public void setTextColor(ELSLimriColor textColor) {
+        this.textColor = textColor;
     }
 }

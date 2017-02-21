@@ -2,6 +2,8 @@ package com.els.button.Controllers;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -16,9 +18,12 @@ import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.InventoryListAdapter;
 import com.els.button.Models.InventoryListAdapterDelegate;
 import com.els.button.Models.UrlBuilder;
+import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
+
+import org.w3c.dom.Document;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,19 +50,63 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         hostIp = getString(R.string.HOST_IP);
         Log.d("ButtonView", "host ip from strings: " + hostIp);
         updateList();
+
+        ELSRest rest = new ELSRest(hostIp, "0987654321", "1111");
+        rest.login(new ELSRestRequestCallback() {
+            @Override
+            public void onSuccess(Document document, Boolean result) {
+                Log.d("ButtonView", "Test Login success");
+            }
+
+            @Override
+            public void onFailure() {
+                Log.d("ButtonView", "Test Login failure");
+            }
+        });
+
+
     }
 
 
     private void updateList() {
         final ListView listView = (ListView) findViewById(R.id.listView);
 
+        ArrayList<ELSEntity> inventories = this.getInventories();
+
+
         if (this.listAdapter == null) {
-            listAdapter = new InventoryListAdapter(this, this, this.getInventories());
+            listAdapter = new InventoryListAdapter(this, this, inventories);
             listView.setAdapter(listAdapter);
         } else {
             listAdapter.clear();
-            listAdapter.addAll(this.getInventories());
+            listAdapter.addAll(inventories);
             listAdapter.notifyDataSetChanged();
+        }
+
+        // Get a handler that can be used to post to the main thread
+        final Handler mainHandler = new Handler(this.getMainLooper());
+
+
+        for (ELSEntity elsEntity : inventories) {
+            if (elsEntity.getClass() == ELSLimri.class) {
+                final ELSLimri limri = (ELSLimri) elsEntity;
+
+                limri.updateStatus(this.hostIp, new Handler.Callback() {
+                    @Override
+                    public boolean handleMessage(Message message) {
+
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                limri.save();
+                                listAdapter.notifyDataSetChanged();
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                        return false;
+                    }
+                });
+            }
         }
     }
 
@@ -67,14 +116,6 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         ArrayList<ELSEntity> inventories = new ArrayList<ELSEntity>();
 
         ArrayList<ELSLimri> limriInventories = new ArrayList<ELSLimri>(SQLite.select().from(ELSLimri.class).queryList());
-
-        for (ELSLimri inventory : limriInventories) {
-
-            ELSRest rest = new ELSRest(hostIp, inventory.getInventoryID(), inventory.getPin());
-            if (rest.login()) {
-                inventory.updateStatus(rest.getInventoryStatus(inventory.getStatusSheet()));
-            }
-        }
 
         inventories.addAll(limriInventories);
         inventories.addAll(SQLite.select().from(ELSIoT.class).queryList());
@@ -111,8 +152,6 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
             startActivityForResult(intent, NEW_INVENTORY_REQUEST);
         } else if (id == R.id.action_refresh) {
             this.updateList();
-        } else if (id == R.id.action_settings) {
-
         }
 
         return super.onOptionsItemSelected(item);
@@ -143,26 +182,39 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     }
 
     @Override
-    public void iotButtonWasPressedWithIotInfoAndSetQuestionValue(ELSIoT elsIoT, String value) {
+    public void iotButtonWasPressedWithIotInfoAndSetQuestionValue(final ELSIoT elsIoT, final String value) {
         Log.d("ButtonView", "iotButtonWasPressedWithSetQuestionValue");
 
-        ELSRest comm = new ELSRest(hostIp, elsIoT.getInventoryID(), elsIoT.getPin());
-        if (comm.login()) {
-            Log.d("ButtonView", "Login was successful");
-            //make a hashmap for the questions and answers to send
-            HashMap<String, String> questionAndAnswer = new HashMap<String, String>();
-            questionAndAnswer.put(elsIoT.getqID(), value);
-            //send the questions and answers to the system in a set question
-            if (comm.setQuestion(questionAndAnswer)) {
-                //SUCCESS
-                Log.d("ButtonView", "set questions was a success!");
-            } else {
-                Log.d("ButtonView", "set questions was a failure");
+        final ELSRest rest = new ELSRest(hostIp, elsIoT.getInventoryID(), elsIoT.getPin());
+        rest.login(new ELSRestRequestCallback() {
+            @Override
+            public void onSuccess(Document document, Boolean result) {
+                Log.d("ButtonView", "Login was successful");
+                //make a hashmap for the questions and answers to send
+                HashMap<String, String> questionAndAnswer = new HashMap<String, String>();
+                questionAndAnswer.put(elsIoT.getqID(), value);
+                //send the questions and answers to the system in a set question
+
+                rest.setQuestion(questionAndAnswer, new ELSRestRequestCallback() {
+                    @Override
+                    public void onSuccess(Document document, Boolean result) {
+                        Log.d("ButtonView", "set questions was a success!");
+                        rest.logout(null);
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        Log.d("ButtonView", "set questions was a failure");
+                        rest.logout(null);
+                    }
+                });
 
             }
-            comm.logout();
-        } else {
-            Log.d("ButtonView", "log in was a failure");
-        }
+
+            @Override
+            public void onFailure() {
+                Log.d("ButtonView", "log in was a failure");
+            }
+        });
     }
 }

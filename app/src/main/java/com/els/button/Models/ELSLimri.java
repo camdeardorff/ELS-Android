@@ -1,8 +1,11 @@
 package com.els.button.Models;
 
-import android.util.Log;
+import android.os.Handler;
+import android.os.Message;
 
 import com.els.button.Database.AppDatabase;
+import com.els.button.Networking.Callbacks.ELSRestInventoryStatusRequestCallback;
+import com.els.button.Networking.ELSRest;
 import com.els.button.Networking.Models.ELSInventoryStatus;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.ForeignKey;
@@ -33,26 +36,45 @@ public class ELSLimri extends ELSEntity {
     public ELSLimri(String inventoryID, String pin, String title, String description, String statusSheet) {
         super(inventoryID, pin, title, description);
         this.statusSheet = statusSheet;
-
     }
 
     @Override
     public void updateStatus(ELSInventoryStatus status) {
-        Log.d("ELSLimri", "updateStatus");
 
         super.updateStatus(status);
         if (status.getStatusSheet() != null && !status.getStatusSheet().equals("")) {
             this.setStatusSheet(status.getStatusSheet());
         }
 
-        if (status.getAppearance() != null && status.getAction() != null) {
-            this.getButton().updateAction(status.getAction());
-            this.getButton().updateAppearance(status.getAppearance());
-        }
-
         this.save();
-        Log.d("ELSLimri", "after updateStatus: status sheet: " + this.getStatusSheet());
+    }
 
+
+    public void updateStatus(String hostIp, final Handler.Callback callback) {
+
+        final ELSLimri context = this;
+        ELSRest rest = new ELSRest(hostIp, this.getInventoryID(), this.getPin());
+        rest.getInventoryStatus(getStatusSheet(), new ELSRestInventoryStatusRequestCallback() {
+            @Override
+            public void onSuccess(ELSInventoryStatus inventoryStatus) {
+                ELSLimri.super.updateStatus(inventoryStatus);
+                if (inventoryStatus.getStatusSheet() != null && !inventoryStatus.getStatusSheet().equals("")) {
+                    context.setStatusSheet(inventoryStatus.getStatusSheet());
+                }
+
+                if (inventoryStatus.getAppearance() != null && inventoryStatus.getAction() != null) {
+                    context.getButton().updateAction(inventoryStatus.getAction());
+                    context.getButton().updateAppearance(inventoryStatus.getAppearance());
+                }
+                context.save();
+                callback.handleMessage(new Message());
+            }
+
+            @Override
+            public void onFailure() {
+                callback.handleMessage(new Message());
+            }
+        });
     }
 
     public String getStatusSheet() {
@@ -69,7 +91,6 @@ public class ELSLimri extends ELSEntity {
     }
 
     public void setButton(ELSLimriButton button) {
-        Log.d("ELSLimri", "set button with button: " + button.getTitle());
         this.button = button;
     }
 }

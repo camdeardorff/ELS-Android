@@ -11,6 +11,7 @@ import com.els.button.R;
 public enum ELSLimriColor {
 
     BLACK(R.color.limri_black),
+    WHITE(R.color.limri_white),
     DARK_BLUE(R.color.limri_dark_blue),
     LIGHT_BLUE(R.color.limri_light_blue),
     DARK_OLIVE(R.color.limri_dark_olive),
@@ -19,6 +20,7 @@ public enum ELSLimriColor {
     RED(R.color.limri_red),
     YELLOW(R.color.limri_yellow),
     GREEN(R.color.limri_green);
+
 
     private int literalColor;
 
@@ -32,10 +34,11 @@ public enum ELSLimriColor {
 
     static public ELSLimriColor fromStringLiteral(String stringLiteral) {
         ELSLimriColor colorFromStringLiteral = null;
-        Log.d("ELSLimriColor", "from string literal)) { " + stringLiteral);
 
         if (stringLiteral.equals("black")) {
             colorFromStringLiteral = ELSLimriColor.BLACK;
+        } else if (stringLiteral.equals("white")) {
+            colorFromStringLiteral = ELSLimriColor.WHITE;
         } else if (stringLiteral.equals("darkBlue")) {
             colorFromStringLiteral = ELSLimriColor.DARK_BLUE;
         } else if (stringLiteral.equals("lightBlue")) {
@@ -56,8 +59,6 @@ public enum ELSLimriColor {
             Log.d("ELSLimriColor", "Did not find a real color, given: " + stringLiteral);
             colorFromStringLiteral = ELSLimriColor.BLACK;
         }
-
-        Log.d("ELSLimriColor", "found)) { " + colorFromStringLiteral.toString() + ", " + colorFromStringLiteral.getLiteralColor());
 
         return colorFromStringLiteral;
     }
