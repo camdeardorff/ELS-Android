@@ -20,6 +20,7 @@ import com.els.button.Models.InventoryListAdapterDelegate;
 import com.els.button.Models.UrlBuilder;
 import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.ELSRest;
+import com.els.button.Networking.Models.ELSInventoryStatusAction;
 import com.els.button.R;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
@@ -49,21 +50,8 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         // get the host ip address from the strings file
         hostIp = getString(R.string.HOST_IP);
         Log.d("ButtonView", "host ip from strings: " + hostIp);
+
         updateList();
-
-        ELSRest rest = new ELSRest(hostIp, "0987654321", "1111");
-        rest.login(new ELSRestRequestCallback() {
-            @Override
-            public void onSuccess(Document document, Boolean result) {
-                Log.d("ButtonView", "Test Login success");
-            }
-
-            @Override
-            public void onFailure() {
-                Log.d("ButtonView", "Test Login failure");
-            }
-        });
-
 
     }
 
@@ -131,7 +119,6 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     }
 
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -164,25 +151,210 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
     }
 
-    @Override
-    public void limriButtonWasPressedWithLimriInfo(ELSLimri elsLimri, ELSLimriButtonPressAction action) {
 
-        UrlBuilder urlBuilder = new UrlBuilder(hostIp);
-        String url = urlBuilder.create(elsLimri, action);
+    public void testSequentialAsync(final ELSRest rest, final ELSLimri elsLimri,
+                                    final int index, final ELSRestRequestCallback callback) {
 
-        Log.d("ButtonView", "url from url builder: " + url);
+        // Get a handler that can be used to post to the main thread
+        final Handler mainHandler = new Handler(this.getMainLooper());
+        final ArrayList<ELSInventoryStatusAction> actions = elsLimri.getButton().getActions();
 
-        if (url != null) {
-            Log.d("ButtonView","limriButtonWasPressedWithLimriInfo");
-            Intent intent = new Intent(this, WebViewer.class);
+        Log.d("ButtonView", "sequential async at index: " + index);
 
-            intent.putExtra("url", url);
-            startActivity(intent);
+        if (index < actions.size()) {
+
+            ELSInventoryStatusAction action = actions.get(index);
+            ELSLimriButtonPressAction actionType = action.getType();
+
+            if (actionType == ELSLimriButtonPressAction.INC_QUESTION) {
+                // always async
+                Log.d("ButtonView", "incriment question");
+
+                rest.incQuestion(action.getLocation(), new ELSRestRequestCallback() {
+                    @Override
+                    public void onSuccess(Document document, Boolean result) {
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                testSequentialAsync(rest, elsLimri, index + 1, callback);
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                testSequentialAsync(rest, elsLimri, index + 1, callback);
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+                });
+
+
+            } else if (actionType == ELSLimriButtonPressAction.SET_QUESTION) {
+                // always async
+                Log.d("ButtonView", "set question");
+
+                HashMap<String, String> response = new HashMap<String, String>();
+                response.put(action.getLocation(), action.getValue());
+
+                rest.setQuestion(response, new ELSRestRequestCallback() {
+                    @Override
+                    public void onSuccess(Document document, Boolean result) {
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                testSequentialAsync(rest, elsLimri, index + 1, callback);
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                testSequentialAsync(rest, elsLimri, index + 1, callback);
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+                });
+
+
+            } else if (actionType == ELSLimriButtonPressAction.LOAD_SHEET) {
+                Log.d("ButtonView", "load sheet");
+
+                // loud or quiet
+                if (action.getDisplay()) {
+
+                    UrlBuilder urlBuilder = new UrlBuilder(hostIp);
+                    String url = urlBuilder.create(elsLimri, action);
+
+                    Log.d("ButtonView", "actions count: " + elsLimri.getButton().getActions().size());
+
+                    Log.d("ButtonView", "url from url builder: " + url);
+
+                    if (url != null) {
+                        Log.d("ButtonView","limriButtonWasPressed");
+                        Intent intent = new Intent(this, WebViewer.class);
+
+                        intent.putExtra("url", url);
+                        startActivity(intent);
+                    }
+                    callback.onSuccess(null, null);
+                } else {
+
+
+                    rest.getSheet(action.getLocation(), new ELSRestRequestCallback() {
+                        @Override
+                        public void onSuccess(Document document, Boolean result) {
+                            Runnable myRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    testSequentialAsync(rest, elsLimri, index + 1, callback);
+                                }
+                            };
+                            mainHandler.post(myRunnable);
+                        }
+
+                        @Override
+                        public void onFailure() {
+                            Runnable myRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    testSequentialAsync(rest, elsLimri, index + 1, callback);
+                                }
+                            };
+                            mainHandler.post(myRunnable);
+                        }
+                    });
+                }
+
+            } else if (actionType == ELSLimriButtonPressAction.LOAD_URL) {
+                Log.d("ButtonView", "load url");
+
+                if (action.getDisplay()) {
+                    UrlBuilder urlBuilder = new UrlBuilder(hostIp);
+                    String url = urlBuilder.create(elsLimri, action);
+
+                    Log.d("ButtonView", "actions count: " + elsLimri.getButton().getActions().size());
+
+                    Log.d("ButtonView", "url from url builder: " + url);
+
+                    if (url != null) {
+                        Log.d("ButtonView","limriButtonWasPressed");
+                        Intent intent = new Intent(this, WebViewer.class);
+
+                        intent.putExtra("url", url);
+                        startActivity(intent);
+                    }
+                    callback.onSuccess(null, null);
+                } else {
+
+
+                    rest.loadArbitraryUrl(action.getLocation(), new ELSRestRequestCallback() {
+                        @Override
+                        public void onSuccess(Document document, Boolean result) {
+                            testSequentialAsync(rest, elsLimri, index + 1, callback);
+                        }
+
+                        @Override
+                        public void onFailure() {
+                            testSequentialAsync(rest, elsLimri, index + 1, callback);
+                        }
+                    });
+                }
+
+            } else if (actionType == ELSLimriButtonPressAction.REFRESH) {
+                Log.d("ButtonView", "refresh");
+
+                updateList();
+                testSequentialAsync(rest, elsLimri, index + 1, callback);
+            } else if (actionType == ELSLimriButtonPressAction.NOTHING) {
+                Log.d("ButtonView", "nothing");
+
+                testSequentialAsync(rest, elsLimri, index + 1, callback);
+
+            }
+        } else {
+            Log.d("ButtonView", "jumping out");
+
+            callback.onSuccess(null, null);
+
         }
     }
 
     @Override
-    public void iotButtonWasPressedWithIotInfoAndSetQuestionValue(final ELSIoT elsIoT, final String value) {
+    public void limriButtonWasPressed(ELSLimri elsLimri, ELSLimriButtonPressAction action) {
+
+
+        // do all actions asynchronously sequentially
+
+        ELSRest rest = new ELSRest(hostIp, elsLimri.getInventoryID(), elsLimri.getPin());
+        Log.d("ButtonView", "start test sequentail async");
+
+        testSequentialAsync(rest, elsLimri, 0, new ELSRestRequestCallback() {
+            @Override
+            public void onSuccess(Document document, Boolean result) {
+                Log.d("ButtonView", "On success");
+            }
+
+            @Override
+            public void onFailure() {
+                Log.d("ButtonView", "On failure");
+            }
+        });
+
+    }
+
+    @Override
+    public void iotButtonWasPressed(final ELSIoT elsIoT, final String value) {
         Log.d("ButtonView", "iotButtonWasPressedWithSetQuestionValue");
 
         final ELSRest rest = new ELSRest(hostIp, elsIoT.getInventoryID(), elsIoT.getPin());
