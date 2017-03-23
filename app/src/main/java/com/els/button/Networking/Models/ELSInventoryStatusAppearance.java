@@ -12,19 +12,15 @@ public class ELSInventoryStatusAppearance {
     private String buttonText;
     private ELSLimriColor buttonColor;
     private ELSLimriColor buttonTextColor;
-    private ELSLimriColor buttonBorderColor;
-    private Integer buttonBorderWidth;
-    private Integer buttonBorderRadius;
+    private Integer buttonCornerRadius;
 
 
-    public ELSInventoryStatusAppearance(String status, String buttonText, ELSLimriColor buttonTextColor, ELSLimriColor buttonColor, ELSLimriColor buttonBorderColor, Integer buttonBorderWidth, Integer buttonBorderRadius) {
+    public ELSInventoryStatusAppearance(String status, String buttonText, ELSLimriColor buttonTextColor, ELSLimriColor buttonColor, Integer buttonBorderRadius) {
         this.status = status;
         this.buttonText = buttonText;
         this.buttonTextColor = buttonTextColor;
         this.buttonColor = buttonColor;
-        this.buttonBorderColor = buttonBorderColor;
-        this.buttonBorderWidth = buttonBorderWidth;
-        this.buttonBorderRadius = buttonBorderRadius;
+        this.buttonCornerRadius = buttonBorderRadius;
     }
 
     public String getStatus() {
@@ -51,28 +47,12 @@ public class ELSInventoryStatusAppearance {
         this.buttonColor = buttonColor;
     }
 
-    public ELSLimriColor getButtonBorderColor() {
-        return buttonBorderColor;
+    public Integer getButtonCornerRadius() {
+        return buttonCornerRadius;
     }
 
-    public void setButtonBorderColor(ELSLimriColor buttonBorderColor) {
-        this.buttonBorderColor = buttonBorderColor;
-    }
-
-    public Integer getButtonBorderWidth() {
-        return buttonBorderWidth;
-    }
-
-    public void setButtonBorderWidth(Integer buttonBorderWidth) {
-        this.buttonBorderWidth = buttonBorderWidth;
-    }
-
-    public Integer getButtonBorderRadius() {
-        return buttonBorderRadius;
-    }
-
-    public void setButtonBorderRadius(Integer buttonBorderRadius) {
-        this.buttonBorderRadius = buttonBorderRadius;
+    public void setButtonCornerRadius(Integer buttonCornerRadius) {
+        this.buttonCornerRadius = buttonCornerRadius;
     }
 
     public ELSLimriColor getButtonTextColor() {

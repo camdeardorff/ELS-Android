@@ -1,5 +1,7 @@
 package com.els.button.Networking.Models;
 
+import java.util.ArrayList;
+
 /**
  * Created by Cam on 1/24/17.
  */
@@ -10,23 +12,23 @@ public class ELSInventoryStatus {
     private String title;
     private String description;
     private String statusSheet;
-    private ELSInventoryStatusAction action;
+    private ArrayList<ELSInventoryStatusAction> actions;
     private ELSInventoryStatusAppearance appearance;
 
-    public ELSInventoryStatus(String title, String description, String statusSheet, ELSInventoryStatusAction action, ELSInventoryStatusAppearance appearance) {
+    public ELSInventoryStatus(String title, String description, String statusSheet, ArrayList<ELSInventoryStatusAction> actions, ELSInventoryStatusAppearance appearance) {
         this.title = title;
         this.description = description;
         this.statusSheet = statusSheet;
-        this.action = action;
+        this.actions = actions;
         this.appearance = appearance;
     }
 
-    public ELSInventoryStatusAction getAction() {
-        return action;
+    public ArrayList<ELSInventoryStatusAction> getActions() {
+        return actions;
     }
 
-    public void setAction(ELSInventoryStatusAction action) {
-        this.action = action;
+    public void setActions(ArrayList<ELSInventoryStatusAction> actions) {
+        this.actions = actions;
     }
 
     public ELSInventoryStatusAppearance getAppearance() {
@@ -60,4 +62,5 @@ public class ELSInventoryStatus {
     public void setStatusSheet(String statusSheet) {
         this.statusSheet = statusSheet;
     }
+
 }
