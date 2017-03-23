@@ -5,6 +5,6 @@ package com.els.button.Models;
  */
 public interface InventoryListAdapterDelegate {
 
-    public void limriButtonWasPressedWithLimriInfo(ELSLimri elsLimri, ELSLimriButtonPressAction action);
-    public void iotButtonWasPressedWithIotInfoAndSetQuestionValue(ELSIoT elsIoT, String value);
+    public void limriButtonWasPressed(ELSLimri elsLimri, ELSLimriButtonPressAction action);
+    public void iotButtonWasPressed(ELSIoT elsIoT, String value);
 }

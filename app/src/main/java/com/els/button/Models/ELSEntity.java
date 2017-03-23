@@ -25,9 +25,10 @@ public class ELSEntity extends BaseModel {
     @Column
     public String title = "";
     @Column
-    public String description = "";
-    @Column
     public Date dateAdded;
+
+    // don't save, get fresh each time
+    public String description = "";
 
     public ELSEntity() {
         this.inventoryID = "";

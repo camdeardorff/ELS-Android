@@ -62,8 +62,9 @@ public class ELSLimri extends ELSEntity {
                     context.setStatusSheet(inventoryStatus.getStatusSheet());
                 }
 
-                if (inventoryStatus.getAppearance() != null && inventoryStatus.getAction() != null) {
-                    context.getButton().updateAction(inventoryStatus.getAction());
+                if (inventoryStatus.getAppearance() != null && inventoryStatus.getActions() != null && inventoryStatus.getActions().size() > 0) {
+                    context.getButton().updateAction(inventoryStatus.getActions().get(0));
+                    context.getButton().setActions(inventoryStatus.getActions());
                     context.getButton().updateAppearance(inventoryStatus.getAppearance());
                 }
                 context.save();

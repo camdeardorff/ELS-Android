@@ -4,12 +4,13 @@ package com.els.button.Models;
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,8 +35,9 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
     private static class LimriViewHolder {
         TextView titleTextView;
         TextView descriptionTextView;
-        ImageView imageImageView;
+        ImageView imageView;
         Button button;
+        ImageButton expandButton;
     }
 
     private static class IoTViewHolder {
@@ -112,8 +114,9 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
                 limriHolder.descriptionTextView = (TextView) limriView.findViewById(R.id.limriInventoryDescription);
                 limriHolder.button = (Button) limriView.findViewById(R.id.limriButton);
                 //TODO: This is a hardcoded image value. Use something different come time
-                limriHolder.imageImageView = (ImageView) limriView.findViewById(R.id.limriInventoryImg);
+                limriHolder.imageView = (ImageView) limriView.findViewById(R.id.limriInventoryImg);
                 //set the limri view's tag to this holder
+                limriHolder.expandButton = (ImageButton) limriView.findViewById(R.id.expandButton);
                 limriView.setTag(limriHolder);
             } else {
                 //the view is not null! take the reused content from the view and put it into the holder
@@ -123,37 +126,65 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
             }
 
 
-            //set the title, description, image, and button to the correct values
-            limriHolder.titleTextView.setText(limriData.title);
-            limriHolder.descriptionTextView.setText(limriData.description);
-            Log.d("InventoryListAdapter", "start description");
-            Log.d("InventoryListAdapter", limriData.description);
-            limriHolder.imageImageView.setImageResource(R.drawable.group_img);
-            limriHolder.button.setText(limriData.getButton().getTitle());
+            // TITLE
+            limriHolder.titleTextView.setText(Html.fromHtml(limriData.title));
+
+            // DESCRIPTION
+            limriHolder.descriptionTextView.setText(Html.fromHtml(limriData.description));
+            // if the description is empty then hide the expand button
+            if (Html.fromHtml(limriData.description).length() > 0) {
+                limriHolder.expandButton.setVisibility(View.VISIBLE);
+            } else {
+                limriHolder.expandButton.setVisibility(View.GONE);
+            }
+
+            // EXPAND BUTTON
+            // references to the ui elements for the on click listener
+            final TextView description = limriHolder.descriptionTextView;
+            final ImageButton expandButton = limriHolder.expandButton;
+            // when the button is clicked hide/show and rotate
+            limriHolder.expandButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (description.getVisibility() == View.GONE) {
+                        description.setVisibility(View.VISIBLE);
+                        expandButton.setRotation(180);
+                    } else {
+                        description.setVisibility(View.GONE);
+                        expandButton.setRotation(0);
+                    }
+                }
+            });
+
+            // IMAGE VIEW
+//            limriHolder.imageView.setImageResource(R.drawable.group_img);
+
+            // BUTTON
+            // set text, text color, and background color
+            limriHolder.button.setText(Html.fromHtml(limriData.getButton().getTitle()));
             limriHolder.button.setTextColor(ContextCompat.getColor(context, limriData.getButton().getTextColor().getLiteralColor()));
-                // TODO: find a color mapping that works... limriData.getButton().getColor()
-//            limriHolder.button.setBackgroundColor(limriData.getButtonColor().getLiteralColor());
             limriHolder.button.setBackgroundColor(ContextCompat.getColor(context, limriData.getButton().getColor().getLiteralColor()));
-            //add an onclick listener to the button
-
+            // put a gradient on the button (mostly for corner radius and color)
             GradientDrawable gd = new GradientDrawable();
-            gd.setCornerRadius(limriData.getButton().getBorderRadius());
-            gd.setColor(ContextCompat.getColor(context, limriData.getButton().getBorderColor().getLiteralColor()));
-            limriHolder.button.setShadowLayer(5, 3, 3, R.color.limri_black);
-
-
-
+            gd.setCornerRadius(limriData.getButton().getCornerRadius());
+            gd.setColor(ContextCompat.getColor(context, limriData.getButton().getColor().getLiteralColor()));
             limriHolder.button.setBackground(gd);
-
 
             limriHolder.button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     //when it is clicked tell the delegate that this button was pressed. It will transition
                     //to another activity. This is the wrong layer to be doing that kind of stuff
-                    delegate.limriButtonWasPressedWithLimriInfo(limriData, limriData.getButton().getAction());
+                    delegate.limriButtonWasPressed(limriData, limriData.getButton().getAction());
                 }
             });
+
+            if (limriData.getButton().getActions() != null
+                    && limriData.getButton().getActions().size() > 0) {
+                limriHolder.button.setVisibility(View.VISIBLE);
+            } else {
+                limriHolder.button.setVisibility(View.GONE);
+            }
 
             //finally return the view we have been messing with
             return limriView;
@@ -190,13 +221,13 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
                 List<Button> buttonList = new ArrayList<Button>();
                 for (final ELSIoTButton btn : iotData.buttons) {
                     Button button = new Button(context);
-                    button.setText(btn.getTitle());
+                    button.setText(Html.fromHtml(btn.getTitle()));
                     button.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             //when it is clicked tell the delegate that this button was pressed. It will transition
                             //to another activity. This is the wrong layer to be doing that kind of stuff
-                            delegate.iotButtonWasPressedWithIotInfoAndSetQuestionValue(iotData, btn.getValue());
+                            delegate.iotButtonWasPressed(iotData, btn.getValue());
                         }
                     });
                     buttonList.add(button);

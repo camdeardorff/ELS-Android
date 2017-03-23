@@ -8,6 +8,8 @@ import com.raizlabs.android.dbflow.annotation.PrimaryKey;
 import com.raizlabs.android.dbflow.annotation.Table;
 import com.raizlabs.android.dbflow.structure.BaseModel;
 
+import java.util.ArrayList;
+
 /**
  * Created by Cam on 1/26/17.
  */
@@ -34,13 +36,12 @@ public class ELSLimriButton extends BaseModel {
     private String location;
 
     @Column
-    private ELSLimriColor borderColor;
+    private Boolean shouldShowActionResponse;
 
     @Column
-    private Integer borderWidth;
+    private Integer cornerRadius;
 
-    @Column
-    private Integer borderRadius;
+    private ArrayList<ELSInventoryStatusAction> actions;
 
     public ELSLimriButton() {
         this.title = "";
@@ -48,15 +49,15 @@ public class ELSLimriButton extends BaseModel {
         this.action = ELSLimriButtonPressAction.NOTHING;
     }
 
-    public ELSLimriButton(String title, ELSLimriColor color, ELSLimriColor textColor, ELSLimriButtonPressAction action, String location, ELSLimriColor borderColor, Integer borderWidth, Integer borderRadius) {
+    public ELSLimriButton(String title, ELSLimriColor color, ELSLimriColor textColor, ELSLimriButtonPressAction action, String location, Boolean shouldShowActionResponse, Integer borderRadius) {
         this.title = title;
         this.color = color;
         this.textColor = textColor;
         this.action = action;
         this.location = location;
-        this.borderColor = borderColor;
-        this.borderWidth = borderWidth;
-        this.borderRadius = borderRadius;
+        this.shouldShowActionResponse = shouldShowActionResponse;
+        this.cornerRadius = borderRadius;
+        this.actions = new ArrayList<ELSInventoryStatusAction>();
     }
 
     public void updateAction(ELSInventoryStatusAction actionStatus) {
@@ -67,9 +68,11 @@ public class ELSLimriButton extends BaseModel {
             if (!actionStatus.getLocation().equals("")) {
                 this.setLocation(actionStatus.getLocation());
             }
+            this.setShouldShowActionResponse(actionStatus.getDisplay());
         }
         this.save();
     }
+
 
     public void updateAppearance(ELSInventoryStatusAppearance appearanceStatus) {
         if (appearanceStatus != null) {
@@ -79,17 +82,11 @@ public class ELSLimriButton extends BaseModel {
             if (appearanceStatus.getButtonTextColor() != null) {
                 this.setTextColor(appearanceStatus.getButtonTextColor());
             }
-            if (appearanceStatus.getButtonBorderColor() != null) {
-                this.setBorderColor(appearanceStatus.getButtonColor());
-            }
             if (!appearanceStatus.getButtonText().equals("")) {
                 this.setTitle(appearanceStatus.getButtonText());
             }
-            if (appearanceStatus.getButtonBorderWidth() > -1) {
-                this.setBorderWidth(appearanceStatus.getButtonBorderWidth());
-            }
-            if (appearanceStatus.getButtonBorderRadius() > -1) {
-                this.setBorderRadius(appearanceStatus.getButtonBorderRadius());
+            if (appearanceStatus.getButtonCornerRadius() > -1) {
+                this.setCornerRadius(appearanceStatus.getButtonCornerRadius());
             }
         }
         this.save();
@@ -127,28 +124,12 @@ public class ELSLimriButton extends BaseModel {
         this.location = location;
     }
 
-    public ELSLimriColor getBorderColor() {
-        return borderColor;
+    public Integer getCornerRadius() {
+        return cornerRadius;
     }
 
-    public void setBorderColor(ELSLimriColor borderColor) {
-        this.borderColor = borderColor;
-    }
-
-    public Integer getBorderWidth() {
-        return borderWidth;
-    }
-
-    public void setBorderWidth(Integer borderWidth) {
-        this.borderWidth = borderWidth;
-    }
-
-    public Integer getBorderRadius() {
-        return borderRadius;
-    }
-
-    public void setBorderRadius(Integer borderRadius) {
-        this.borderRadius = borderRadius;
+    public void setCornerRadius(Integer cornerRadius) {
+        this.cornerRadius = cornerRadius;
     }
 
     public ELSLimriColor getTextColor() {
@@ -157,5 +138,21 @@ public class ELSLimriButton extends BaseModel {
 
     public void setTextColor(ELSLimriColor textColor) {
         this.textColor = textColor;
+    }
+
+    public Boolean isShouldShowActionResponse() {
+        return shouldShowActionResponse;
+    }
+
+    public void setShouldShowActionResponse(Boolean shouldShowActionResponse) {
+        this.shouldShowActionResponse = shouldShowActionResponse;
+    }
+
+    public ArrayList<ELSInventoryStatusAction> getActions() {
+        return actions;
+    }
+
+    public void setActions(ArrayList<ELSInventoryStatusAction> actions) {
+        this.actions = actions;
     }
 }
