@@ -24,7 +24,7 @@
         </activity>
         <activity
             android:name=".Controllers.WebViewer"
-            android:label="ELS-WebViewer"
+            android:label="@string/title_activity_web_viewer"
             android:theme="@style/AppTheme.NoActionBar"></activity>
         <!--
              ATTENTION: This was auto-generated to add Google Play services to your project for
