@@ -68,7 +68,7 @@ public class InventoryConfigurator extends AppCompatActivity {
                                 // create the new inventory
                                 final ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
                                 // create the button for this inventory and save it
-                                ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", ELSLimriColor.BLACK, 1, 1);
+                                ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
                                 newButton.save();
                                 // associate the button with the inventory and save
                                 newLimri.setButton(newButton);
