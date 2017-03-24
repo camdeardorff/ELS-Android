@@ -166,7 +166,9 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
             limriHolder.button.setBackgroundColor(ContextCompat.getColor(context, limriData.getButton().getColor().getLiteralColor()));
             // put a gradient on the button (mostly for corner radius and color)
             GradientDrawable gd = new GradientDrawable();
-            gd.setCornerRadius(limriData.getButton().getCornerRadius());
+            if (limriData.getButton().getCornerRadius() != null) {
+                gd.setCornerRadius(limriData.getButton().getCornerRadius());
+            }
             gd.setColor(ContextCompat.getColor(context, limriData.getButton().getColor().getLiteralColor()));
             limriHolder.button.setBackground(gd);
 
