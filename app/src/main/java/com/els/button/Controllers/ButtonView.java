@@ -35,7 +35,8 @@ import java.util.HashMap;
 public class ButtonView extends AppCompatActivity implements InventoryListAdapterDelegate {
 
     // instance variable for host ip, the value is retrieved from the strings file
-    private static String hostIp = ""; //"192.168.0.29";
+    private static String contentServer; //"192.168.0.29";
+    private static String displayClient;
     private static InventoryListAdapter listAdapter = null;
 
     static final int NEW_INVENTORY_REQUEST = 1;
@@ -48,8 +49,8 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         setSupportActionBar(toolbar);
 
         // get the host ip address from the strings file
-        hostIp = getString(R.string.HOST_IP);
-        Log.d("ButtonView", "host ip from strings: " + hostIp);
+        contentServer = getString(R.string.CONTEST_SERVER);
+        displayClient = getString(R.string.DISPLAY_CLIENT);
 
         updateList();
 
@@ -79,7 +80,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
             if (elsEntity.getClass() == ELSLimri.class) {
                 final ELSLimri limri = (ELSLimri) elsEntity;
 
-                limri.updateStatus(this.hostIp, new Handler.Callback() {
+                limri.updateStatus(this.contentServer, new Handler.Callback() {
                     @Override
                     public boolean handleMessage(Message message) {
 
@@ -135,7 +136,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
         if (id == R.id.action_create_new) {
             Intent intent = new Intent(this, InventoryConfigurator.class);
-            intent.putExtra("host", hostIp);
+            intent.putExtra("host", contentServer);
             startActivityForResult(intent, NEW_INVENTORY_REQUEST);
         } else if (id == R.id.action_refresh) {
             this.updateList();
@@ -233,7 +234,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                 // loud or quiet
                 if (action.getDisplay()) {
 
-                    UrlBuilder urlBuilder = new UrlBuilder(hostIp);
+                    UrlBuilder urlBuilder = new UrlBuilder(contentServer, displayClient);
                     String url = urlBuilder.create(elsLimri, action);
 
                     Log.d("ButtonView", "actions count: " + elsLimri.getButton().getActions().size());
@@ -280,7 +281,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                 Log.d("ButtonView", "load url");
 
                 if (action.getDisplay()) {
-                    UrlBuilder urlBuilder = new UrlBuilder(hostIp);
+                    UrlBuilder urlBuilder = new UrlBuilder(contentServer, displayClient);
                     String url = urlBuilder.create(elsLimri, action);
 
                     Log.d("ButtonView", "actions count: " + elsLimri.getButton().getActions().size());
@@ -336,7 +337,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
         // do all actions asynchronously sequentially
 
-        ELSRest rest = new ELSRest(hostIp, elsLimri.getInventoryID(), elsLimri.getPin());
+        ELSRest rest = new ELSRest(contentServer, elsLimri.getInventoryID(), elsLimri.getPin());
         Log.d("ButtonView", "start test sequentail async");
 
         testSequentialAsync(rest, elsLimri, 0, new ELSRestRequestCallback() {
@@ -357,7 +358,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     public void iotButtonWasPressed(final ELSIoT elsIoT, final String value) {
         Log.d("ButtonView", "iotButtonWasPressedWithSetQuestionValue");
 
-        final ELSRest rest = new ELSRest(hostIp, elsIoT.getInventoryID(), elsIoT.getPin());
+        final ELSRest rest = new ELSRest(contentServer, elsIoT.getInventoryID(), elsIoT.getPin());
         rest.login(new ELSRestRequestCallback() {
             @Override
             public void onSuccess(Document document, Boolean result) {
