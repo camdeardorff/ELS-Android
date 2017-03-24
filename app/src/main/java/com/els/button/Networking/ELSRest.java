@@ -518,10 +518,10 @@ public class ELSRest {
     }
 
     private class OkRequest {
-        private String hostIP;
+        private String serverLocation;
 
         OkRequest(String hostIP) {
-            this.hostIP = hostIP;
+            this.serverLocation = hostIP;
         }
 
         public void execute(String command, final OkRequestCallback callback) {
@@ -530,7 +530,7 @@ public class ELSRest {
 
             OkHttpClient client = new OkHttpClient();
             okhttp3.Request request = new okhttp3.Request.Builder()
-                    .url("http://" + hostIP + ":8080/ContentServer/ContentServer?" + command)
+                    .url(serverLocation + "?" + command)
                     .build();
 
             Log.d("OkRequest", "request built " + request.toString());
