@@ -5,9 +5,8 @@
     <string name="action_refresh">Refresh</string>
     <string name="action_create_new">New</string>
 
-    <string name="HOST_IP">10.118.53.127</string>
-
-
+    <string name="CONTEST_SERVER">http://cs3.kenyon.edu/ContentServer</string>
+    <string name="DISPLAY_CLIENT">http://cs3.kenyon.edu/DisplayClient</string>
 
     <!-- activity ButtonView -->
     <string name="activity_button_view_label">Inventories</string>
