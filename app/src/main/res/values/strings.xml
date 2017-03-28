@@ -6,10 +6,21 @@
     <string name="action_create_new">New</string>
 
     <string name="CONTENT_SERVER">http://cs3.kenyon.edu/ContentServer</string>
-    <string name="DISPLAY_CLIENT">http://cs3.kenyon.edu/DisplayClient</string>
+    <!-- NOTE! must have /NewDisplay.html on the end here or no auto login -->
+    <string name="DISPLAY_CLIENT">http://cs3.kenyon.edu/DisplayClient/NewDisplay.html</string>
+
+    <!-- general network errors -->
+    <string name="alert_network_unreachable_title">Network Unreachable</string>
+    <string name="alert_network_unreachable_message">There was a problem connecting to the internet, please check your network settings and try again.</string>
+
+    <string name="alert_server_unreachable_title">Server Unreachable</string>
+    <string name="alert_server_unreachable_message">The server is experiencing problems. Please try again later.</string>
+
 
     <!-- activity ButtonView -->
     <string name="activity_button_view_label">Inventories</string>
+    <string name="alert_reconfigure_inventory_title">Incorrect ID and PIN</string>
+    <string name="alert_reconfigure_inventory_message">Please update the ID and PIN for this inventory, otherwise this inventory will be removed.</string>
 
 
     <!-- activity InventoryConfigurator -->
