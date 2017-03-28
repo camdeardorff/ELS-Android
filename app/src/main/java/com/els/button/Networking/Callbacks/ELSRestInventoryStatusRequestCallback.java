@@ -8,5 +8,5 @@ import com.els.button.Networking.Models.ELSInventoryStatus;
 
 public interface ELSRestInventoryStatusRequestCallback {
     void onSuccess(ELSInventoryStatus inventoryStatus);
-    void onFailure();
+    void onFailure(Boolean didFailLogin);
 }
