@@ -89,14 +89,22 @@ public class ELSRest {
             public void onSuccess(String xml) {
                 //create a document with the string result from the request
                 Document doc = getXmlDocument(xml);
+
                 //xpath into the document to get the response from the result attribute (see loginResponsePath)
                 String loginResponsePath = "//reply/@result";
                 String result = xPathForString(doc, loginResponsePath);
 
-                Boolean success = result.equals("success");
+                if (result != null) {
+                    Boolean success = result.equals("success");
 
-                //if successful the value will be "success"
-                callback.onSuccess(doc, success);
+                    //if successful the value will be "success"
+                    callback.onSuccess(doc, success);
+                } else {
+                    // did not get an expected response from the server
+                    callback.onFailure();
+                }
+
+
             }
 
             @Override
@@ -343,13 +351,15 @@ public class ELSRest {
                     callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, actions, appearance));
                 } else {
                     // the request was successful but it's message was bad
-                    callback.onFailure();
+                    // fail because of a bad login
+                    callback.onFailure(true);
                 }
             }
 
             @Override
             public void onFailure() {
-                callback.onFailure();
+                // couldn't get the sheet, (not login credentials)
+                callback.onFailure(false);
             }
         });
     }
