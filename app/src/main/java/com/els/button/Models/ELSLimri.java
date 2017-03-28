@@ -1,9 +1,7 @@
 package com.els.button.Models;
 
-import android.os.Handler;
-import android.os.Message;
-
 import com.els.button.Database.AppDatabase;
+import com.els.button.Interfaces.StatusUpdateResult;
 import com.els.button.Networking.Callbacks.ELSRestInventoryStatusRequestCallback;
 import com.els.button.Networking.ELSRest;
 import com.els.button.Networking.Models.ELSInventoryStatus;
@@ -50,7 +48,7 @@ public class ELSLimri extends ELSEntity {
     }
 
 
-    public void updateStatus(String hostIp, final Handler.Callback callback) {
+    public void updateStatus(String hostIp, final StatusUpdateResult callback) {
 
         final ELSLimri context = this;
         ELSRest rest = new ELSRest(hostIp, this.getInventoryID(), this.getPin());
@@ -68,12 +66,19 @@ public class ELSLimri extends ELSEntity {
                     context.getButton().updateAppearance(inventoryStatus.getAppearance());
                 }
                 context.save();
-                callback.handleMessage(new Message());
+                callback.success();
             }
 
             @Override
-            public void onFailure() {
-                callback.handleMessage(new Message());
+            public void onFailure(Boolean didFailLogin) {
+
+                if (didFailLogin) {
+                    // fix credentials
+                    callback.failureFromCredentials();
+                } else {
+                    // could not connect to server
+                    callback.failureFromConnectivity();
+                }
             }
         });
     }
