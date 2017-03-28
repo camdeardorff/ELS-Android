@@ -1,9 +1,13 @@
 package com.els.button.Controllers;
 
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -11,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ListView;
 
+import com.els.button.Interfaces.StatusUpdateResult;
 import com.els.button.Models.ELSEntity;
 import com.els.button.Models.ELSIoT;
 import com.els.button.Models.ELSLimri;
@@ -35,7 +40,7 @@ import java.util.HashMap;
 public class ButtonView extends AppCompatActivity implements InventoryListAdapterDelegate {
 
     // instance variable for host ip, the value is retrieved from the strings file
-    private static String contentServer; //"192.168.0.29";
+    private static String contentServer;
     private static String displayClient;
     private static InventoryListAdapter listAdapter = null;
 
@@ -49,10 +54,14 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         setSupportActionBar(toolbar);
 
         // get the host ip address from the strings file
-        contentServer = getString(R.string.CONTEST_SERVER);
+        contentServer = getString(R.string.CONTENT_SERVER);
         displayClient = getString(R.string.DISPLAY_CLIENT);
 
-        updateList();
+        if (isConnected()) {
+            updateList();
+        } else {
+            showNetworkConnectivityAlert();
+        }
 
     }
 
@@ -80,10 +89,9 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
             if (elsEntity.getClass() == ELSLimri.class) {
                 final ELSLimri limri = (ELSLimri) elsEntity;
 
-                limri.updateStatus(this.contentServer, new Handler.Callback() {
+                limri.updateStatus(this.contentServer, new StatusUpdateResult() {
                     @Override
-                    public boolean handleMessage(Message message) {
-
+                    public void success() {
                         Runnable myRunnable = new Runnable() {
                             @Override
                             public void run() {
@@ -92,7 +100,28 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                             }
                         };
                         mainHandler.post(myRunnable);
-                        return false;
+                    }
+
+                    @Override
+                    public void failureFromCredentials() {
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                showReconfigureInventoryAlert();
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+
+                    @Override
+                    public void failureFromConnectivity() {
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                showServerConnectivityAlert();
+                            }
+                        };
+                        mainHandler.post(myRunnable);
                     }
                 });
             }
@@ -119,6 +148,48 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         return inventories;
     }
 
+    private boolean isConnected() {
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
+    }
+
+    private void showNetworkConnectivityAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.alert_network_unreachable_message)
+                .setTitle(R.string.alert_network_unreachable_title);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showReconfigureInventoryAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.alert_reconfigure_inventory_message)
+                .setTitle(R.string.alert_reconfigure_inventory_title);
+        builder.setPositiveButton("Update", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Log.d("ButtonView", "reconfigure alert update button pressed");
+            }
+        });
+        builder.setNegativeButton("Remove", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Log.d("ButtonView", "reconfigure alert remove button pressed");
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showServerConnectivityAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.alert_server_unreachable_message)
+                .setTitle(R.string.alert_server_unreachable_title);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -135,11 +206,18 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         int id = item.getItemId();
 
         if (id == R.id.action_create_new) {
+            // create intent to go to the Inventory Configurator activity
             Intent intent = new Intent(this, InventoryConfigurator.class);
             intent.putExtra("host", contentServer);
+            // start the activity
             startActivityForResult(intent, NEW_INVENTORY_REQUEST);
+
         } else if (id == R.id.action_refresh) {
-            this.updateList();
+            if (isConnected()) {
+                updateList();
+            } else {
+                showNetworkConnectivityAlert();
+            }
         }
 
         return super.onOptionsItemSelected(item);
@@ -147,12 +225,15 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d("ButtonView", "onActivityResult");
-        updateList();
-
+        if (isConnected()) {
+            updateList();
+        } else {
+            showNetworkConnectivityAlert();
+        }
     }
 
 
+    //TODO: move this to it's own class
     public void testSequentialAsync(final ELSRest rest, final ELSLimri elsLimri,
                                     final int index, final ELSRestRequestCallback callback) {
 
@@ -242,7 +323,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                     Log.d("ButtonView", "url from url builder: " + url);
 
                     if (url != null) {
-                        Log.d("ButtonView","limriButtonWasPressed");
+                        Log.d("ButtonView", "limriButtonWasPressed");
                         Intent intent = new Intent(this, WebViewer.class);
 
                         intent.putExtra("url", url);
@@ -289,7 +370,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                     Log.d("ButtonView", "url from url builder: " + url);
 
                     if (url != null) {
-                        Log.d("ButtonView","limriButtonWasPressed");
+                        Log.d("ButtonView", "limriButtonWasPressed");
                         Intent intent = new Intent(this, WebViewer.class);
 
                         intent.putExtra("url", url);

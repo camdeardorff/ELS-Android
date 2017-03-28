@@ -1,8 +1,10 @@
 package com.els.button.Controllers;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -11,12 +13,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.els.button.Interfaces.StatusUpdateResult;
 import com.els.button.Models.ELSLimri;
 import com.els.button.Models.ELSLimriButton;
 import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.ELSLimriColor;
-import com.els.button.Networking.ELSRest;
 import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
+import com.els.button.Networking.ELSRest;
 import com.els.button.R;
 
 import org.w3c.dom.Document;
@@ -47,76 +50,85 @@ public class InventoryConfigurator extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                final String iid = iidTextView.getText().toString();
-                final String pin = pinTextView.getText().toString();
-
-                Log.d("InventoryConfigurator", "iid: " + iid);
-                Log.d("InventoryConfigurator", "pin: " + pin);
+                if (!isConnected()) {
+                    showConnectivityAlert();
+                } else {
 
 
-                // Get a handler that can be used to post to the main thread
-                final Handler mainHandler = new Handler(getMainLooper());
+                    final String iid = iidTextView.getText().toString();
+                    final String pin = pinTextView.getText().toString();
 
-                if (!iid.isEmpty() && !pin.isEmpty()) {
-                    final ELSRest rest = new ELSRest(host, iid, pin);
+                    Log.d("InventoryConfigurator", "iid: " + iid);
+                    Log.d("InventoryConfigurator", "pin: " + pin);
 
-                    rest.login(new ELSRestRequestCallback() {
-                        @Override
-                        public void onSuccess(Document document, Boolean result) {
 
-                            if (result) {
-                                // create the new inventory
-                                final ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
-                                // create the button for this inventory and save it
-                                ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
-                                newButton.save();
-                                // associate the button with the inventory and save
-                                newLimri.setButton(newButton);
-                                newLimri.save();
+                    // Get a handler that can be used to post to the main thread
+                    final Handler mainHandler = new Handler(getMainLooper());
 
-                                newLimri.updateStatus(host, new Handler.Callback() {
-                                    @Override
-                                    public boolean handleMessage(Message message) {
+                    if (!iid.isEmpty() && !pin.isEmpty()) {
+                        final ELSRest rest = new ELSRest(host, iid, pin);
 
-                                        Runnable myRunnable = new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                newLimri.save();
-                                                Log.d("InventoryConfigurator", "saved new elslimri");
-                                                exit(SUCCESSFUL_INVENTORY_CREATION);
-                                            }
-                                        };
-                                        mainHandler.post(myRunnable);
-                                        return false;
-                                    }
-                                });
+                        rest.login(new ELSRestRequestCallback() {
+                            @Override
+                            public void onSuccess(Document document, Boolean result) {
 
-                            } else {
+                                if (result) {
+                                    // create the new inventory
+                                    final ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
+                                    // create the button for this inventory and save it
+                                    final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
+                                    newButton.save();
+                                    // associate the button with the inventory and save
+                                    newLimri.setButton(newButton);
+                                    newLimri.save();
+
+                                    newLimri.updateStatus(host, new StatusUpdateResult() {
+                                        @Override
+                                        public void success() {
+                                            newLimri.save();
+                                            Log.d("InventoryConfigurator", "saved new elslimri");
+                                            exit(SUCCESSFUL_INVENTORY_CREATION);
+                                        }
+
+                                        @Override
+                                        public void failureFromCredentials() {
+                                            newButton.delete();
+                                            newLimri.delete();
+                                            showFailureMessage();
+                                        }
+
+                                        @Override
+                                        public void failureFromConnectivity() {
+                                            newButton.delete();
+                                            newLimri.delete();
+                                            showFailureMessage();
+                                        }
+                                    });
+
+                                } else {
+                                    // failed, got the sheet but was not logged in.
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            showFailureMessage();
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+                            }
+                            @Override
+                            public void onFailure() {
+                                // failed, did not get the sheet... server?
                                 Runnable myRunnable = new Runnable() {
                                     @Override
                                     public void run() {
-                                        showFailureMessage();
+                                        showServerConnectivityAlert();
                                     }
                                 };
                                 mainHandler.post(myRunnable);
                             }
-                        }
-
-
-                        @Override
-                        public void onFailure() {
-                            Runnable myRunnable = new Runnable() {
-                                @Override
-                                public void run() {
-                                    showFailureMessage();
-                                }
-                            };
-                            mainHandler.post(myRunnable);
-                        }
-                    });
-                } else {
-                    // report errors
-                    Log.d("InventoryConfigurator", "iid and pin are empty");
+                        });
+                    }
                 }
             }
         });
@@ -129,6 +141,13 @@ public class InventoryConfigurator extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    private boolean isConnected() {
+        ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
     private void showFailureMessage() {
@@ -144,9 +163,24 @@ public class InventoryConfigurator extends AppCompatActivity {
         dialog.show();
     }
 
+    private void showConnectivityAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.alert_network_unreachable_message)
+                .setTitle(R.string.alert_network_unreachable_title);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void showServerConnectivityAlert() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.alert_server_unreachable_message)
+                .setTitle(R.string.alert_server_unreachable_title);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     private void exit(Integer result) {
         setResult(result);
         finish();
     }
-
 }
