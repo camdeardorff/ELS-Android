@@ -39,108 +39,112 @@ public class InventoryConfigurator extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Bundle bundle = getIntent().getExtras();
-        final String host = bundle.getString("host");
 
         final TextView iidTextView = (TextView) findViewById(R.id.activity_inventory_configurator_iid_textview);
         final TextView pinTextView = (TextView) findViewById(R.id.activity_inventory_configurator_pin_textview);
 
         Button createButton = (Button) findViewById(R.id.activity_inventory_configurator_button_done);
-        createButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if (createButton != null) {
+            createButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
 
-                if (!isConnected()) {
-                    showConnectivityAlert();
-                } else {
-
-
-                    final String iid = iidTextView.getText().toString();
-                    final String pin = pinTextView.getText().toString();
-
-                    Log.d("InventoryConfigurator", "iid: " + iid);
-                    Log.d("InventoryConfigurator", "pin: " + pin);
+                    if (!isConnected()) {
+                        showConnectivityAlert();
+                    } else if (iidTextView != null && pinTextView != null) {
 
 
-                    // Get a handler that can be used to post to the main thread
-                    final Handler mainHandler = new Handler(getMainLooper());
+                        final String iid = iidTextView.getText().toString();
+                        final String pin = pinTextView.getText().toString();
 
-                    if (!iid.isEmpty() && !pin.isEmpty()) {
-                        final ELSRest rest = new ELSRest(host, iid, pin);
+                        Log.d("InventoryConfigurator", "iid: " + iid);
+                        Log.d("InventoryConfigurator", "pin: " + pin);
 
-                        rest.login(new ELSRestRequestCallback() {
-                            @Override
-                            public void onSuccess(Document document, Boolean result) {
 
-                                if (result) {
-                                    // create the new inventory
-                                    final ELSLimri newLimri = new ELSLimri(iid, pin, "Title", "Description", "Button");
-                                    // create the button for this inventory and save it
-                                    final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
-                                    newButton.save();
-                                    // associate the button with the inventory and save
-                                    newLimri.setButton(newButton);
-                                    newLimri.save();
+                        // Get a handler that can be used to post to the main thread
+                        final Handler mainHandler = new Handler(getMainLooper());
+                        final String defaultServer = getString(R.string.CONTENT_SERVER);
 
-                                    newLimri.updateStatus(host, new StatusUpdateResult() {
-                                        @Override
-                                        public void success() {
-                                            newLimri.save();
-                                            Log.d("InventoryConfigurator", "saved new elslimri");
-                                            exit(SUCCESSFUL_INVENTORY_CREATION);
-                                        }
+                        if (!iid.isEmpty() && !pin.isEmpty()) {
+                            final ELSRest rest = new ELSRest(defaultServer, iid, pin);
 
-                                        @Override
-                                        public void failureFromCredentials() {
-                                            newButton.delete();
-                                            newLimri.delete();
-                                            showFailureMessage();
-                                        }
+                            rest.login(new ELSRestRequestCallback() {
+                                @Override
+                                public void onSuccess(Document document, Boolean result) {
 
-                                        @Override
-                                        public void failureFromConnectivity() {
-                                            newButton.delete();
-                                            newLimri.delete();
-                                            showFailureMessage();
-                                        }
-                                    });
+                                    if (result) {
+                                        // create the new inventory
+                                        final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", "Button");
+                                        // create the button for this inventory and save it
+                                        final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
+                                        newButton.save();
+                                        // associate the button with the inventory and save
+                                        newLimri.setButton(newButton);
+                                        newLimri.save();
 
-                                } else {
-                                    // failed, got the sheet but was not logged in.
+                                        newLimri.updateStatus(newLimri.getServerLocation(), new StatusUpdateResult() {
+                                            @Override
+                                            public void success() {
+                                                newLimri.save();
+                                                Log.d("InventoryConfigurator", "saved new elslimri");
+                                                exit(SUCCESSFUL_INVENTORY_CREATION);
+                                            }
+
+                                            @Override
+                                            public void failureFromCredentials() {
+                                                newButton.delete();
+                                                newLimri.delete();
+                                                showFailureMessage();
+                                            }
+
+                                            @Override
+                                            public void failureFromConnectivity() {
+                                                newButton.delete();
+                                                newLimri.delete();
+                                                showFailureMessage();
+                                            }
+                                        });
+
+                                    } else {
+                                        // failed, got the sheet but was not logged in.
+                                        Runnable myRunnable = new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                showFailureMessage();
+                                            }
+                                        };
+                                        mainHandler.post(myRunnable);
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure() {
+                                    // failed, did not get the sheet... server?
                                     Runnable myRunnable = new Runnable() {
                                         @Override
                                         public void run() {
-                                            showFailureMessage();
+                                            showServerConnectivityAlert();
                                         }
                                     };
                                     mainHandler.post(myRunnable);
                                 }
-                            }
-                            @Override
-                            public void onFailure() {
-                                // failed, did not get the sheet... server?
-                                Runnable myRunnable = new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showServerConnectivityAlert();
-                                    }
-                                };
-                                mainHandler.post(myRunnable);
-                            }
-                        });
+                            });
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         Button cancelButton = (Button) findViewById(R.id.activity_inventory_configurator_button_cancel);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                setResult(CANCELED_INVENTORY_CREATION_REQUEST);
-                finish();
-            }
-        });
+        if (cancelButton != null) {
+            cancelButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    setResult(CANCELED_INVENTORY_CREATION_REQUEST);
+                    finish();
+                }
+            });
+        }
     }
 
     private boolean isConnected() {
