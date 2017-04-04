@@ -64,7 +64,7 @@ public class InventoryConfigurator extends AppCompatActivity {
                         // Get a handler that can be used to post to the main thread
                         final Handler mainHandler = new Handler(getMainLooper());
                         final String defaultServer = getString(R.string.CONTENT_SERVER);
-                        final String defaultSheet = getString(R.string.default_sheet_name);
+                        final String defaultSheet = getString(R.string.DEFAULT_SHEET_NAME);
 
                         if (!iid.isEmpty() && !pin.isEmpty()) {
                             final ELSRest rest = new ELSRest(defaultServer, iid, pin);
