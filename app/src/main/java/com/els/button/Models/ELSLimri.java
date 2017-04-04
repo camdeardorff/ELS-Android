@@ -26,13 +26,13 @@ public class ELSLimri extends ELSEntity {
         this.statusSheet = "";
     }
 
-    public ELSLimri(String inventoryID, String pin, String statusSheet) {
-        super(inventoryID, pin);
+    public ELSLimri(String serverLocation, String inventoryID, String pin, String statusSheet) {
+        super(serverLocation, inventoryID, pin);
         this.statusSheet = statusSheet;
     }
 
-    public ELSLimri(String inventoryID, String pin, String title, String description, String statusSheet) {
-        super(inventoryID, pin, title, description);
+    public ELSLimri(String serverLocation, String inventoryID, String pin, String title, String description, String statusSheet) {
+        super(serverLocation, inventoryID, pin, title, description);
         this.statusSheet = statusSheet;
     }
 
@@ -48,10 +48,10 @@ public class ELSLimri extends ELSEntity {
     }
 
 
-    public void updateStatus(String hostIp, final StatusUpdateResult callback) {
+    public void updateStatus(final StatusUpdateResult callback) {
 
         final ELSLimri context = this;
-        ELSRest rest = new ELSRest(hostIp, this.getInventoryID(), this.getPin());
+        ELSRest rest = new ELSRest(this.getServerLocation(), this.getInventoryID(), this.getPin());
         rest.getInventoryStatus(getStatusSheet(), new ELSRestInventoryStatusRequestCallback() {
             @Override
             public void onSuccess(ELSInventoryStatus inventoryStatus) {

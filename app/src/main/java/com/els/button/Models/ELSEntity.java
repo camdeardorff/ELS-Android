@@ -1,5 +1,7 @@
 package com.els.button.Models;
 
+import android.util.Log;
+
 import com.els.button.Database.AppDatabase;
 import com.els.button.Networking.Models.ELSInventoryStatus;
 import com.raizlabs.android.dbflow.annotation.Column;
@@ -19,6 +21,8 @@ public class ELSEntity extends BaseModel {
     @PrimaryKey(autoincrement = true)
     public long id;
     @Column
+    public String serverLocation;
+    @Column
     public String inventoryID;
     @Column
     public String pin;
@@ -31,18 +35,21 @@ public class ELSEntity extends BaseModel {
     public String description = "";
 
     public ELSEntity() {
+        this.serverLocation = "";
         this.inventoryID = "";
         this.pin = "";
         this.dateAdded = new Date();
     }
 
-    public ELSEntity(String inventoryID, String pin) {
+    public ELSEntity(String serverLocation, String inventoryID, String pin) {
+        this.serverLocation = serverLocation;
         this.inventoryID = inventoryID;
         this.pin = pin;
         this.dateAdded = new Date();
     }
 
-    public ELSEntity(String inventoryID, String pin, String title, String description) {
+    public ELSEntity(String serverLocation, String inventoryID, String pin, String title, String description) {
+        this.serverLocation = serverLocation;
         this.inventoryID = inventoryID;
         this.pin = pin;
         this.title = title;
@@ -50,7 +57,8 @@ public class ELSEntity extends BaseModel {
         this.dateAdded = new Date();
     }
 
-    public ELSEntity(String inventoryID, String pin, String title, String description, Date dateAdded) {
+    public ELSEntity(String serverLocation, String inventoryID, String pin, String title, String description, Date dateAdded) {
+        this.serverLocation = serverLocation;
         this.inventoryID = inventoryID;
         this.pin = pin;
         this.title = title;
@@ -65,15 +73,36 @@ public class ELSEntity extends BaseModel {
         if (status.getDescription() != null && status.getDescription() != "") {
             this.setDescription(status.getDescription());
         }
+        if (status.getServerLocation() != null && status.getServerLocation() != "") {
+            this.setServerLocation(status.getServerLocation());
+        }
         this.save();
     }
 
-    public String getDescription() {
-        return description;
+    public long getId() {
+        return id;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getServerLocation() {
+        return serverLocation;
+    }
+
+    public void setServerLocation(String serverLocation) {
+        this.serverLocation = serverLocation;
+        Log.d("ELSEntity", "set server location to " + serverLocation);
+    }
+
+    public String getInventoryID() {
+
+        return inventoryID;
+    }
+
+    public void setInventoryID(String inventoryID) {
+        this.inventoryID = inventoryID;
     }
 
     public String getPin() {
@@ -92,21 +121,12 @@ public class ELSEntity extends BaseModel {
         this.title = title;
     }
 
-    public String getInventoryID() {
-
-        return inventoryID;
+    public String getDescription() {
+        return description;
     }
 
-    public void setInventoryID(String inventoryID) {
-        this.inventoryID = inventoryID;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Date getDateAdded() {

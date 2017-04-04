@@ -24,15 +24,15 @@ public class ELSIoT extends ELSEntity {
         this.buttons = null;
     }
 
-    public ELSIoT(String inventoryID, String pin, String qID, List<ELSIoTButton> buttons) {
-        super(inventoryID, pin);
+    public ELSIoT(String serverLocation, String inventoryID, String pin, String qID, List<ELSIoTButton> buttons) {
+        super(serverLocation, inventoryID, pin);
         this.qID = qID;
         this.buttons = buttons;
         associateButtons();
     }
 
-    public ELSIoT(String inventoryID, String pin, String qID, String title, String description, List<ELSIoTButton> buttons) {
-        super(inventoryID, pin, title, description);
+    public ELSIoT(String serverLocation, String inventoryID, String pin, String qID, String title, String description, List<ELSIoTButton> buttons) {
+        super(serverLocation, inventoryID, pin, title, description);
         this.qID = qID;
         this.buttons = buttons;
         associateButtons();
