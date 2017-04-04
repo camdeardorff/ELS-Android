@@ -35,27 +35,17 @@ public enum ELSLimriColor {
     static public ELSLimriColor fromStringLiteral(String stringLiteral) {
         ELSLimriColor colorFromStringLiteral = null;
 
-        if (stringLiteral.equals("black")) {
-            colorFromStringLiteral = ELSLimriColor.BLACK;
-        } else if (stringLiteral.equals("white")) {
-            colorFromStringLiteral = ELSLimriColor.WHITE;
-        } else if (stringLiteral.equals("darkBlue")) {
-            colorFromStringLiteral = ELSLimriColor.DARK_BLUE;
-        } else if (stringLiteral.equals("lightBlue")) {
-            colorFromStringLiteral = ELSLimriColor.LIGHT_BLUE;
-        } else if (stringLiteral.equals("darkOlive")) {
-            colorFromStringLiteral = ELSLimriColor.DARK_OLIVE;
-        } else if (stringLiteral.equals("lightOlive")) {
-            colorFromStringLiteral = ELSLimriColor.LIGHT_OLIVE;
-        } else if (stringLiteral.equals("tan")) {
-            colorFromStringLiteral = ELSLimriColor.TAN;
-        } else if (stringLiteral.equals("red")) {
-            colorFromStringLiteral = ELSLimriColor.RED;
-        } else if (stringLiteral.equals("yellow")) {
-            colorFromStringLiteral = ELSLimriColor.YELLOW;
-        } else if (stringLiteral.equals("green")) {
-            colorFromStringLiteral = ELSLimriColor.GREEN;
-        } else {
+        if (stringLiteral.equals("black")) {            colorFromStringLiteral = ELSLimriColor.BLACK;}
+        else if (stringLiteral.equals("white")) {       colorFromStringLiteral = ELSLimriColor.WHITE; }
+        else if (stringLiteral.equals("darkBlue")) {    colorFromStringLiteral = ELSLimriColor.DARK_BLUE; }
+        else if (stringLiteral.equals("lightBlue")) {   colorFromStringLiteral = ELSLimriColor.LIGHT_BLUE; }
+        else if (stringLiteral.equals("darkOlive")) {   colorFromStringLiteral = ELSLimriColor.DARK_OLIVE; }
+        else if (stringLiteral.equals("lightOlive")) {  colorFromStringLiteral = ELSLimriColor.LIGHT_OLIVE; }
+        else if (stringLiteral.equals("tan")) {         colorFromStringLiteral = ELSLimriColor.TAN; }
+        else if (stringLiteral.equals("red")) {         colorFromStringLiteral = ELSLimriColor.RED; }
+        else if (stringLiteral.equals("yellow")) {      colorFromStringLiteral = ELSLimriColor.YELLOW; }
+        else if (stringLiteral.equals("green")) {       colorFromStringLiteral = ELSLimriColor.GREEN; }
+        else {
             Log.d("ELSLimriColor", "Did not find a real color, given: " + stringLiteral);
             colorFromStringLiteral = ELSLimriColor.BLACK;
         }
