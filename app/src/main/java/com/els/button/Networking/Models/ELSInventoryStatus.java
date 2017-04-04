@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 /**
  * Created by Cam on 1/24/17.
+ * Model used to transfer status information
  */
 
 
@@ -12,15 +13,25 @@ public class ELSInventoryStatus {
     private String title;
     private String description;
     private String statusSheet;
+    private String serverLocation;
     private ArrayList<ELSInventoryStatusAction> actions;
     private ELSInventoryStatusAppearance appearance;
 
-    public ELSInventoryStatus(String title, String description, String statusSheet, ArrayList<ELSInventoryStatusAction> actions, ELSInventoryStatusAppearance appearance) {
+    public ELSInventoryStatus(String title, String description, String statusSheet, String serverLocation, ArrayList<ELSInventoryStatusAction> actions, ELSInventoryStatusAppearance appearance) {
         this.title = title;
         this.description = description;
         this.statusSheet = statusSheet;
+        this.serverLocation = serverLocation;
         this.actions = actions;
         this.appearance = appearance;
+    }
+
+    public String getServerLocation() {
+        return serverLocation;
+    }
+
+    public void setServerLocation(String serverLocation) {
+        this.serverLocation = serverLocation;
     }
 
     public ArrayList<ELSInventoryStatusAction> getActions() {
