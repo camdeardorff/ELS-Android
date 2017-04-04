@@ -64,6 +64,7 @@ public class InventoryConfigurator extends AppCompatActivity {
                         // Get a handler that can be used to post to the main thread
                         final Handler mainHandler = new Handler(getMainLooper());
                         final String defaultServer = getString(R.string.CONTENT_SERVER);
+                        final String defaultSheet = getString(R.string.default_sheet_name);
 
                         if (!iid.isEmpty() && !pin.isEmpty()) {
                             final ELSRest rest = new ELSRest(defaultServer, iid, pin);
@@ -74,7 +75,7 @@ public class InventoryConfigurator extends AppCompatActivity {
 
                                     if (result) {
                                         // create the new inventory
-                                        final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", "Button");
+                                        final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", defaultSheet);
                                         // create the button for this inventory and save it
                                         final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
                                         newButton.save();
@@ -82,7 +83,7 @@ public class InventoryConfigurator extends AppCompatActivity {
                                         newLimri.setButton(newButton);
                                         newLimri.save();
 
-                                        newLimri.updateStatus(newLimri.getServerLocation(), new StatusUpdateResult() {
+                                        newLimri.updateStatus(new StatusUpdateResult() {
                                             @Override
                                             public void success() {
                                                 newLimri.save();
