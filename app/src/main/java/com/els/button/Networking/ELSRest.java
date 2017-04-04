@@ -56,7 +56,7 @@ public class ELSRest {
     private String pin;
     //TODO: make this truly a random session id
     String sessionID = "0987654321";
-    public Boolean loggedIn;
+    private Boolean loggedIn;
 
     /**
      * Initializer - initilizes ELSRest object
@@ -194,8 +194,8 @@ public class ELSRest {
             //loop through every key value pair in the qidAndResponses hashmap
             for (Map.Entry<String, String> entry : qidsAndResponses.entrySet()) {
                 //append the key to the qid and value to the response
-                qidBuilder.append("\"" + entry.getKey() + "\",");
-                responseBuilder.append("\"" + entry.getValue() + "\",");
+                qidBuilder.append("\"").append(entry.getKey()).append("\",");
+                responseBuilder.append("\"").append(entry.getValue()).append("\",");
             }
 
             //remove the last comma from each builder by setting their length back one
@@ -347,8 +347,8 @@ public class ELSRest {
                     String title = xPathForString(document, "//title");
                     String description = xPathForSubtreeString(document, "//description");
                     String nextStatusSheet = xPathForString(document, "//statusSheet");
-
-                    callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, actions, appearance));
+                    String serverLocation = xPathForString(document, "//serverLocation");
+                    callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, serverLocation, actions, appearance));
                 } else {
                     // the request was successful but it's message was bad
                     // fail because of a bad login
