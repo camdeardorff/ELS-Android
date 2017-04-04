@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.els.button.Interfaces.InventoryListAdapterDelegate;
 import com.els.button.R;
 
 import java.util.ArrayList;
