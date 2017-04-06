@@ -1,5 +1,6 @@
 package com.els.button.Controllers;
 
+import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -7,26 +8,32 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ListView;
 
 import com.els.button.Interfaces.ELSActionManagerCallback;
+import com.els.button.Interfaces.InventoryListAdapterDelegate;
 import com.els.button.Interfaces.StatusUpdateResult;
 import com.els.button.Models.ELSActionManager;
 import com.els.button.Models.ELSEntity;
 import com.els.button.Models.ELSIoT;
 import com.els.button.Models.ELSLimri;
+import com.els.button.Models.ELSLimriButton;
 import com.els.button.Models.ELSLimriButtonPressAction;
+import com.els.button.Models.ELSLimriColor;
 import com.els.button.Models.InventoryListAdapter;
-import com.els.button.Models.InventoryListAdapterDelegate;
 import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
+import com.els.button.Views.ELSInventoryAttributesDialog;
+import com.els.button.Views.ELSInventoryOptionsDialog;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import org.w3c.dom.Document;
@@ -37,12 +44,15 @@ import java.util.Comparator;
 import java.util.HashMap;
 
 
-public class ButtonView extends AppCompatActivity implements InventoryListAdapterDelegate {
+public class ButtonView extends AppCompatActivity implements InventoryListAdapterDelegate, ELSInventoryAttributesDialog.Listener, ELSInventoryOptionsDialog.Listener {
 
     // instance variable for host ip, the value is retrieved from the strings file
     private static String contentServer;
     private static String displayClient;
     private static InventoryListAdapter listAdapter = null;
+
+    private static final String ATTRIBUTE_DIALOG_IDENTIFIER = "ATTRIBUTE_DIALOG_IDENTIFIER";
+    private static final String OPTIONS_DIALOG_IDENTIFIER = "OPTIONS_DIALOG_IDENTIFIER";
 
     static final int NEW_INVENTORY_REQUEST = 1;
 
@@ -57,6 +67,19 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         contentServer = getString(R.string.CONTENT_SERVER);
         displayClient = getString(R.string.DISPLAY_CLIENT);
 
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.newInventoryFAB);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ELSInventoryAttributesDialog attributesDialog = new ELSInventoryAttributesDialog();
+                attributesDialog.setTitle(getString(R.string.add_inventory_title));
+                attributesDialog.setMessage(getString(R.string.add_inventory_message));
+
+                attributesDialog.show(getFragmentManager(), ATTRIBUTE_DIALOG_IDENTIFIER);
+            }
+        });
+
+
         if (isConnected()) {
             updateList();
         } else {
@@ -65,7 +88,18 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
 
+        if (isConnected()) {
+            updateList();
+        } else {
+            showNetworkConnectivityAlert();
+        }
+    }
+
+    // updates the list view with inventories from the database
     private void updateList() {
         final ListView listView = (ListView) findViewById(R.id.listView);
 
@@ -128,9 +162,8 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         }
     }
 
-
+    // get the list of inventories from the database
     private ArrayList<ELSEntity> getInventories() {
-        Log.d("ButtonView", "get inventories");
         ArrayList<ELSEntity> inventories = new ArrayList<ELSEntity>();
 
         ArrayList<ELSLimri> limriInventories = new ArrayList<ELSLimri>(SQLite.select().from(ELSLimri.class).queryList());
@@ -148,6 +181,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         return inventories;
     }
 
+    // checks connectivity status, returns true if connected to internet
     private boolean isConnected() {
         ConnectivityManager cm = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -155,12 +189,27 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
-    private void showNetworkConnectivityAlert() {
+    // abstraction over alert dialog
+    private void showAlert(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.alert_network_unreachable_message)
-                .setTitle(R.string.alert_network_unreachable_title);
+        builder.setMessage(message).setTitle(title);
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    private void showNetworkConnectivityAlert() {
+        showAlert(getString(R.string.alert_network_unreachable_title),
+                getString(R.string.alert_network_unreachable_message));
+    }
+
+    private void showServerConnectivityAlert() {
+        showAlert(getString(R.string.alert_server_unreachable_title),
+                getString(R.string.alert_server_unreachable_message));
+    }
+
+    private void showFailureAlert() {
+        showAlert(getString(R.string.activity_inventory_configurator_alert_title),
+                getString(R.string.activity_inventory_configurator_alert_message));
     }
 
     private void showReconfigureInventoryAlert() {
@@ -183,13 +232,6 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         dialog.show();
     }
 
-    private void showServerConnectivityAlert() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(R.string.alert_server_unreachable_message)
-                .setTitle(R.string.alert_server_unreachable_title);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -205,14 +247,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        if (id == R.id.action_create_new) {
-            // create intent to go to the Inventory Configurator activity
-            Intent intent = new Intent(this, InventoryConfigurator.class);
-            intent.putExtra("host", contentServer);
-            // start the activity
-            startActivityForResult(intent, NEW_INVENTORY_REQUEST);
-
-        } else if (id == R.id.action_refresh) {
+         if (id == R.id.action_refresh) {
             if (isConnected()) {
                 updateList();
             } else {
@@ -223,203 +258,11 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (isConnected()) {
-            updateList();
-        } else {
-            showNetworkConnectivityAlert();
-        }
-    }
-
-
-    //TODO: move this to it's own class
-//    public void testSequentialAsync(final ELSRest rest, final ELSLimri elsLimri,
-//                                    final int index, final ELSRestRequestCallback callback) {
-//
-//        // Get a handler that can be used to post to the main thread
-//        final Handler mainHandler = new Handler(this.getMainLooper());
-//        final ArrayList<ELSInventoryStatusAction> actions = elsLimri.getButton().getActions();
-//
-//        Log.d("ButtonView", "sequential async at index: " + index);
-//
-//        if (index < actions.size()) {
-//
-//            ELSInventoryStatusAction action = actions.get(index);
-//            ELSLimriButtonPressAction actionType = action.getType();
-//
-//            if (actionType == ELSLimriButtonPressAction.INC_QUESTION) {
-//                // always async
-//                Log.d("ButtonView", "incriment question");
-//
-//                rest.incQuestion(action.getLocation(), new ELSRestRequestCallback() {
-//                    @Override
-//                    public void onSuccess(Document document, Boolean result) {
-//                        Runnable myRunnable = new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                            }
-//                        };
-//                        mainHandler.post(myRunnable);
-//                    }
-//
-//                    @Override
-//                    public void onFailure() {
-//                        Runnable myRunnable = new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                            }
-//                        };
-//                        mainHandler.post(myRunnable);
-//                    }
-//                });
-//
-//
-//            } else if (actionType == ELSLimriButtonPressAction.SET_QUESTION) {
-//                // always async
-//                Log.d("ButtonView", "set question");
-//
-//                HashMap<String, String> response = new HashMap<String, String>();
-//                response.put(action.getLocation(), action.getValue());
-//
-//                rest.setQuestion(response, new ELSRestRequestCallback() {
-//                    @Override
-//                    public void onSuccess(Document document, Boolean result) {
-//                        Runnable myRunnable = new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                            }
-//                        };
-//                        mainHandler.post(myRunnable);
-//                    }
-//
-//                    @Override
-//                    public void onFailure() {
-//                        Runnable myRunnable = new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                            }
-//                        };
-//                        mainHandler.post(myRunnable);
-//                    }
-//                });
-//
-//
-//            } else if (actionType == ELSLimriButtonPressAction.LOAD_SHEET) {
-//                Log.d("ButtonView", "load sheet");
-//
-//                // loud or quiet
-//                if (action.getDisplay()) {
-//
-//                    UrlBuilder urlBuilder = new UrlBuilder(contentServer, displayClient);
-//                    String url = urlBuilder.create(elsLimri, action);
-//
-//                    Log.d("ButtonView", "actions count: " + elsLimri.getButton().getActions().size());
-//
-//                    Log.d("ButtonView", "url from url builder: " + url);
-//
-//                    if (url != null) {
-//                        Log.d("ButtonView", "limriButtonWasPressed");
-//                        Intent intent = new Intent(this, WebViewer.class);
-//
-//                        intent.putExtra("url", url);
-//                        startActivity(intent);
-//                    }
-//                    callback.onSuccess(null, null);
-//                } else {
-//
-//
-//                    rest.getSheet(action.getLocation(), new ELSRestRequestCallback() {
-//                        @Override
-//                        public void onSuccess(Document document, Boolean result) {
-//                            Runnable myRunnable = new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                                }
-//                            };
-//                            mainHandler.post(myRunnable);
-//                        }
-//
-//                        @Override
-//                        public void onFailure() {
-//                            Runnable myRunnable = new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                                }
-//                            };
-//                            mainHandler.post(myRunnable);
-//                        }
-//                    });
-//                }
-//
-//            } else if (actionType == ELSLimriButtonPressAction.LOAD_URL) {
-//                Log.d("ButtonView", "load url");
-//
-//                if (action.getDisplay()) {
-//                    UrlBuilder urlBuilder = new UrlBuilder(contentServer, displayClient);
-//                    String url = urlBuilder.create(elsLimri, action);
-//
-//                    Log.d("ButtonView", "actions count: " + elsLimri.getButton().getActions().size());
-//
-//                    Log.d("ButtonView", "url from url builder: " + url);
-//
-//                    if (url != null) {
-//                        Log.d("ButtonView", "limriButtonWasPressed");
-//                        Intent intent = new Intent(this, WebViewer.class);
-//
-//                        intent.putExtra("url", url);
-//                        startActivity(intent);
-//                    }
-//                    callback.onSuccess(null, null);
-//                } else {
-//
-//
-//                    rest.loadArbitraryUrl(action.getLocation(), new ELSRestRequestCallback() {
-//                        @Override
-//                        public void onSuccess(Document document, Boolean result) {
-//                            testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                        }
-//
-//                        @Override
-//                        public void onFailure() {
-//                            testSequentialAsync(rest, elsLimri, index + 1, callback);
-//                        }
-//                    });
-//                }
-//
-//            } else if (actionType == ELSLimriButtonPressAction.REFRESH) {
-//                Log.d("ButtonView", "refresh");
-//
-//                updateList();
-//                testSequentialAsync(rest, elsLimri, index + 1, callback);
-//            } else if (actionType == ELSLimriButtonPressAction.NOTHING) {
-//                Log.d("ButtonView", "nothing");
-//
-//                testSequentialAsync(rest, elsLimri, index + 1, callback);
-//
-//            }
-//        } else {
-//            Log.d("ButtonView", "jumping out");
-//
-//            callback.onSuccess(null, null);
-//
-//        }
-//    }
 
     @Override
     public void limriButtonWasPressed(ELSLimri elsLimri, ELSLimriButtonPressAction action) {
-
-
         // do all actions asynchronously sequentially
-
         ELSRest rest = new ELSRest(contentServer, elsLimri.getInventoryID(), elsLimri.getPin());
-        Log.d("ButtonView", "start test sequential async");
 
         final Context context = this;
         ELSActionManager actionManager = new ELSActionManager(context, elsLimri);
@@ -442,14 +285,19 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     }
 
     @Override
+    public void limriConfigurationButtonWasPressed(ELSLimri elsLimri) {
+        ELSInventoryOptionsDialog inventoryOptionsDialog = new ELSInventoryOptionsDialog();
+        inventoryOptionsDialog.setLimri(elsLimri);
+        inventoryOptionsDialog.show(getFragmentManager(), OPTIONS_DIALOG_IDENTIFIER);
+    }
+
+    @Override
     public void iotButtonWasPressed(final ELSIoT elsIoT, final String value) {
-        Log.d("ButtonView", "iotButtonWasPressedWithSetQuestionValue");
 
         final ELSRest rest = new ELSRest(contentServer, elsIoT.getInventoryID(), elsIoT.getPin());
         rest.login(new ELSRestRequestCallback() {
             @Override
             public void onSuccess(Document document, Boolean result) {
-                Log.d("ButtonView", "Login was successful");
                 //make a hashmap for the questions and answers to send
                 HashMap<String, String> questionAndAnswer = new HashMap<String, String>();
                 questionAndAnswer.put(elsIoT.getqID(), value);
@@ -458,13 +306,11 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                 rest.setQuestion(questionAndAnswer, new ELSRestRequestCallback() {
                     @Override
                     public void onSuccess(Document document, Boolean result) {
-                        Log.d("ButtonView", "set questions was a success!");
                         rest.logout(null);
                     }
 
                     @Override
                     public void onFailure() {
-                        Log.d("ButtonView", "set questions was a failure");
                         rest.logout(null);
                     }
                 });
@@ -477,4 +323,230 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
             }
         });
     }
+
+
+    @Override
+    public void onDeleteButtonClick(DialogFragment dialog, ELSLimri limri) {
+        // delete the inventory
+        limri.delete();
+        // dismiss the dialog
+        dialog.dismiss();
+        // update the list
+        updateList();
+    }
+
+    @Override
+    public void onEditButtonClick(DialogFragment dialog, ELSLimri limri) {
+        // open up the edit dialog
+
+        dialog.dismiss();
+
+        ELSInventoryAttributesDialog attributesDialog = new ELSInventoryAttributesDialog();
+
+        attributesDialog.setPreFillInventoryID(limri.getInventoryID());
+        attributesDialog.setPreFillPin(limri.getPin());
+        attributesDialog.setElsLimri(limri);
+        attributesDialog.setTitle(getString(R.string.reconfigure_inventory_title));
+        attributesDialog.setMessage(getString(R.string.reconfigure_inventory_message));
+
+        attributesDialog.show(getFragmentManager(), ATTRIBUTE_DIALOG_IDENTIFIER);
+    }
+
+    @Override
+    public void onAttributeUpdate(DialogFragment dialog, final ELSLimri limri, final String iid, final String pin) {
+
+        // Get a handler that can be used to post to the main thread
+        final Handler mainHandler = new Handler(getMainLooper());
+
+        Boolean createNewLimri = limri == null;
+        if (createNewLimri) {
+
+            // check that both pin and id have some value
+            if (!iid.isEmpty() && !pin.isEmpty()) {
+                final String defaultServer = getString(R.string.CONTENT_SERVER);
+                final String defaultSheet = getString(R.string.DEFAULT_SHEET_NAME);
+                // rest object to authenticate with the default server
+                final ELSRest rest = new ELSRest(defaultServer, iid, pin);
+                // try to log in
+                rest.login(new ELSRestRequestCallback() {
+                    @Override
+                    public void onSuccess(Document document, Boolean result) {
+                        // successful request, check request
+                        if (result) {
+                            // successful login
+                            // create the new inventory
+                            final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", defaultSheet);
+                            // create the button for this inventory and save it
+                            final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
+                            newButton.save();
+                            // associate the button with the inventory and save
+                            newLimri.setButton(newButton);
+                            newLimri.save();
+                            // update the status of the inventory
+                            newLimri.updateStatus(new StatusUpdateResult() {
+                                @Override
+                                public void success() {
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // successful update, save and update the list
+                                            newLimri.save();
+                                            updateList();
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+
+                                @Override
+                                public void failureFromCredentials() {
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // could not log in upon update?
+                                            // something really went wrong, delete the row and show the failure alert
+                                            newButton.delete();
+                                            newLimri.delete();
+                                            showFailureAlert();
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+
+                                @Override
+                                public void failureFromConnectivity() {
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // could not connect
+                                            newButton.delete();
+                                            newLimri.delete();
+                                            showServerConnectivityAlert();
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+                            });
+
+                        } else {
+                            // failed, got the sheet but was not logged in.
+                            Runnable myRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    showFailureAlert();
+                                }
+                            };
+                            mainHandler.post(myRunnable);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        // failed, did not get the sheet... server?
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                showServerConnectivityAlert();
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+                });
+            }
+
+        } else {
+            // not new, reconfiguring
+            if (!iid.isEmpty() && !pin.isEmpty()) {
+                final ELSRest rest = new ELSRest(limri.getServerLocation(), iid, pin);
+                // log in with new credentials
+                rest.login(new ELSRestRequestCallback() {
+                    @Override
+                    public void onSuccess(Document document, Boolean result) {
+                        // request successful
+                        if (result) {
+                            // logged in successfully
+                            limri.updateStatus(new StatusUpdateResult() {
+                                @Override
+                                public void success() {
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // save the inventory and update the list
+                                            limri.save();
+                                            updateList();
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+
+                                @Override
+                                public void failureFromCredentials() {
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // failed because of bad credentials
+                                            // show the alert once again
+                                            ELSInventoryAttributesDialog signInDialog = new ELSInventoryAttributesDialog();
+
+                                            signInDialog.setPreFillInventoryID(limri.getInventoryID());
+                                            signInDialog.setPreFillPin(limri.getPin());
+                                            signInDialog.setElsLimri(limri);
+                                            signInDialog.setTitle(getString(R.string.reconfigure_inventory_title));
+                                            signInDialog.setMessage(getString(R.string.reconfigure_inventory_failure_message));
+
+                                            signInDialog.show(getFragmentManager(), ATTRIBUTE_DIALOG_IDENTIFIER);
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+
+                                @Override
+                                public void failureFromConnectivity() {
+                                    Runnable myRunnable = new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            showNetworkConnectivityAlert();
+                                        }
+                                    };
+                                    mainHandler.post(myRunnable);
+                                }
+                            });
+
+
+                        } else {
+                            // failed login
+                            // bad credentials, try again
+                            Runnable myRunnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    ELSInventoryAttributesDialog signInDialog = new ELSInventoryAttributesDialog();
+
+                                    signInDialog.setPreFillInventoryID(limri.getInventoryID());
+                                    signInDialog.setPreFillPin(limri.getPin());
+                                    signInDialog.setElsLimri(limri);
+                                    signInDialog.setTitle(getString(R.string.reconfigure_inventory_title));
+                                    signInDialog.setMessage(getString(R.string.reconfigure_inventory_failure_message));
+
+                                    signInDialog.show(getFragmentManager(), ATTRIBUTE_DIALOG_IDENTIFIER);
+                                }
+                            };
+                            mainHandler.post(myRunnable);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure() {
+                        // could not connect to server
+                        Runnable myRunnable = new Runnable() {
+                            @Override
+                            public void run() {
+                                showServerConnectivityAlert();
+                            }
+                        };
+                        mainHandler.post(myRunnable);
+                    }
+                });
+            }
+        }
+    }
+
 }
