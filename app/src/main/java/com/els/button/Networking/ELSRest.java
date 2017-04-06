@@ -305,7 +305,7 @@ public class ELSRest {
      * @param statusSheet: sheet name to request
      * @param callback:    ELSRestInventoryStatusRequestCallback to tell the caller what the result of the request was.
      */
-    public void getInventoryStatus(String statusSheet, final ELSRestInventoryStatusRequestCallback callback) {
+    public void getInventoryStatus(final String statusSheet, final ELSRestInventoryStatusRequestCallback callback) {
 
         // get the status sheet
         this.getSheet(statusSheet, new ELSRestRequestCallback() {
@@ -342,13 +342,12 @@ public class ELSRest {
                     NodeList actionNodes = xPathForNodeSet(document, "//actions/action");
                     ArrayList<ELSInventoryStatusAction> actions = getActionsFromNodeList(actionNodes);
 
-                    Log.d("ELSRest", "actions added to list with count: " + actions.size());
-
                     String title = xPathForString(document, "//title");
                     String description = xPathForSubtreeString(document, "//description");
                     String nextStatusSheet = xPathForString(document, "//statusSheet");
-                    String serverLocation = xPathForString(document, "//serverLocation");
-                    callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, serverLocation, actions, appearance));
+                    String nextServerLocation = xPathForString(document, "//serverLocation");
+
+                    callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, nextServerLocation, actions, appearance));
                 } else {
                     // the request was successful but it's message was bad
                     // fail because of a bad login
