@@ -14,16 +14,36 @@
         xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-        <ImageView
-            android:id="@+id/limriInventoryImg"
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_centerInParent="true"
-            android:minHeight="32dp"
-            android:minWidth="32dp"
-            android:src="@drawable/human_female" />
+            android:layout_centerInParent="true">
+
+            <ImageView
+                android:id="@+id/limriInventoryImg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="32dp"
+                android:minWidth="32dp"
+                android:src="@drawable/human_male_female"/>
+
+            <ImageButton
+                android:id="@+id/configure_button"
+                android:src="@drawable/cog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minHeight="32dp"
+                android:minWidth="32dp"
+                android:background="@null"/>
+
+        </LinearLayout>
+
+
+
+
 
         <TextView
             android:id="@+id/limriInventoryName"
