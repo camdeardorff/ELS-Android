@@ -8,8 +8,4 @@
         app:showAsAction="ifRoom"
         android:icon="@drawable/ic_cached_white_24dp" />
 
-    <item android:title="@string/action_create_new"
-        android:id="@+id/action_create_new"
-        app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_add_circle_outline_white_24dp" />
 </menu>
