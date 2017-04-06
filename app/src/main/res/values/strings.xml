@@ -5,9 +5,11 @@
     <string name="action_refresh">Refresh</string>
     <string name="action_create_new">New</string>
 
-    <string name="CONTENT_SERVER">http://cs3.kenyon.edu/ContentServer</string>
+    <!-- <string name="CONTENT_SERVER">http://cs3.kenyon.edu/ContentServer</string> -->
+    <string name="CONTENT_SERVER">http://10.148.49.177:8080/ContentServer/ContentServer</string>
     <!-- NOTE! must have /NewDisplay.html on the end here or no auto login -->
     <string name="DISPLAY_CLIENT">http://cs3.kenyon.edu/DisplayClient/NewDisplay.html</string>
+    <string name="DEFAULT_SHEET_NAME">Status</string>
 
     <!-- general network errors -->
     <string name="alert_network_unreachable_title">Network Unreachable</string>
@@ -22,6 +24,13 @@
     <string name="alert_reconfigure_inventory_title">Incorrect ID and PIN</string>
     <string name="alert_reconfigure_inventory_message">Please update the ID and PIN for this inventory, otherwise this inventory will be removed.</string>
 
+    <string name="add_inventory_title">Add New Inventory</string>
+    <string name="add_inventory_message">Enter Inventory ID and PIN as necessary.</string>
+
+    <string name="reconfigure_inventory_title">Reconfigure Inventory</string>
+    <string name="reconfigure_inventory_message">Re-enter Inventory ID and PIN as necessary.</string>
+    <string name="reconfigure_inventory_failure_message">Inventory ID and PIN entered are invalid, please try again.</string>
+
 
     <!-- activity InventoryConfigurator -->
     <string name="title_activity_inventory_configurator">Import Inventory</string>
@@ -34,4 +43,13 @@
 
     <!-- activity Web Viewer -->
     <string name="title_activity_web_viewer">LIMRI or WEB - TEMP</string>
+
+
+    <string name="inventoryID">Inventory ID</string>
+    <string name="pin">PIN</string>
+    <string name="cancel">Cancel</string>
+    <string name="done">Done</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+
 </resources>
