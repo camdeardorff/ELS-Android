@@ -17,6 +17,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    dexOptions {
+        preDexLibraries false
+    }
 }
 
 def dbflow_version = "4.0.0-beta5"
@@ -42,3 +45,4 @@ dependencies {
     // networking library okhttp
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
 }
+
