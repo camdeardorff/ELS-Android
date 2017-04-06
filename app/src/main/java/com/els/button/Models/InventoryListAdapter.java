@@ -39,6 +39,7 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
         ImageView imageView;
         Button button;
         ImageButton expandButton;
+        ImageButton configureButton;
     }
 
     private static class IoTViewHolder {
@@ -114,10 +115,10 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
                 limriHolder.titleTextView = (TextView) limriView.findViewById(R.id.limriInventoryName);
                 limriHolder.descriptionTextView = (TextView) limriView.findViewById(R.id.limriInventoryDescription);
                 limriHolder.button = (Button) limriView.findViewById(R.id.limriButton);
-                //TODO: This is a hardcoded image value. Use something different come time
                 limriHolder.imageView = (ImageView) limriView.findViewById(R.id.limriInventoryImg);
-                //set the limri view's tag to this holder
+                limriHolder.configureButton = (ImageButton) limriView.findViewById(R.id.configure_button);
                 limriHolder.expandButton = (ImageButton) limriView.findViewById(R.id.expandButton);
+                //set the limri view's tag to this holder
                 limriView.setTag(limriHolder);
             } else {
                 //the view is not null! take the reused content from the view and put it into the holder
@@ -138,6 +139,14 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
             } else {
                 limriHolder.expandButton.setVisibility(View.GONE);
             }
+
+            // CONFIGURE BUTTON
+            limriHolder.configureButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    delegate.limriConfigurationButtonWasPressed(limriData);
+                }
+            });
 
             // EXPAND BUTTON
             // references to the ui elements for the on click listener
