@@ -9,6 +9,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -28,7 +29,8 @@ import com.els.button.Models.ELSLimri;
 import com.els.button.Models.ELSLimriButton;
 import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.ELSLimriColor;
-import com.els.button.Models.InventoryListAdapter;
+import com.els.button.Models.ELSLimriIcon;
+import com.els.button.Models.InventoryArrayAdapter;
 import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
@@ -49,12 +51,14 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     // instance variable for host ip, the value is retrieved from the strings file
     private static String contentServer;
     private static String displayClient;
-    private static InventoryListAdapter listAdapter = null;
+    private static InventoryArrayAdapter listAdapter = null;
+
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+    private Boolean networkUnreachableAlertShown = false;
 
     private static final String ATTRIBUTE_DIALOG_IDENTIFIER = "ATTRIBUTE_DIALOG_IDENTIFIER";
     private static final String OPTIONS_DIALOG_IDENTIFIER = "OPTIONS_DIALOG_IDENTIFIER";
-
-    static final int NEW_INVENTORY_REQUEST = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +83,19 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
             }
         });
 
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                if (isConnected()) {
+                    updateList();
+                    swipeRefreshLayout.setRefreshing(false);
+                } else {
+                    showNetworkConnectivityAlert();
+                }
+            }
+        });
+
 
         if (isConnected()) {
             updateList();
@@ -88,9 +105,14 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
     }
 
+    /*
+    when the app goes into the background and later returns to the foreground
+    - check the connection status and update the list, otherwise it will be empty
+     */
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d("ButtonView", "On Resume");
 
         if (isConnected()) {
             updateList();
@@ -105,21 +127,14 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
 
         ArrayList<ELSEntity> inventories = this.getInventories();
 
-
-        if (this.listAdapter == null) {
-            listAdapter = new InventoryListAdapter(this, this, inventories);
-            listView.setAdapter(listAdapter);
-        } else {
-            listAdapter.clear();
-            listAdapter.addAll(inventories);
-            listAdapter.notifyDataSetChanged();
-        }
+        listAdapter = new InventoryArrayAdapter(this, this, inventories);
+        listView.setAdapter(listAdapter);
 
         // Get a handler that can be used to post to the main thread
         final Handler mainHandler = new Handler(this.getMainLooper());
 
-
-        for (ELSEntity elsEntity : inventories) {
+        // update each of the inventories in the list
+        for (final ELSEntity elsEntity : inventories) {
             if (elsEntity.getClass() == ELSLimri.class) {
                 final ELSLimri limri = (ELSLimri) elsEntity;
 
@@ -141,7 +156,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                         Runnable myRunnable = new Runnable() {
                             @Override
                             public void run() {
-                                showReconfigureInventoryAlert();
+                                showReconfigureInventoryAlert(elsEntity);
                             }
                         };
                         mainHandler.post(myRunnable);
@@ -152,7 +167,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                         Runnable myRunnable = new Runnable() {
                             @Override
                             public void run() {
-                                showServerConnectivityAlert();
+                                showServerConnectivityAlert(elsEntity, "");
                             }
                         };
                         mainHandler.post(myRunnable);
@@ -198,21 +213,67 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     }
 
     private void showNetworkConnectivityAlert() {
-        showAlert(getString(R.string.alert_network_unreachable_title),
-                getString(R.string.alert_network_unreachable_message));
+        if (!networkUnreachableAlertShown) {
+            // get the strings from from the resources
+            String title = getString(R.string.alert_network_unreachable_title);
+            String message = getString(R.string.alert_network_unreachable_message);
+            // build the alert
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(message).setTitle(title);
+            AlertDialog dialog = builder.create();
+            dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialogInterface) {
+                    // once the dialog is dismissed, switch the alert status
+                    networkUnreachableAlertShown = false;
+                }
+            });
+            dialog.show();
+            networkUnreachableAlertShown = true;
+        }
     }
 
-    private void showServerConnectivityAlert() {
-        showAlert(getString(R.string.alert_server_unreachable_title),
-                getString(R.string.alert_server_unreachable_message));
+    private void showServerConnectivityAlert(ELSEntity elsEntity, String url) {
+//        showAlert(getString(R.string.alert_server_unreachable_title),
+//                getString(R.string.alert_server_unreachable_message));
+        String title = getString(R.string.alert_server_unreachable_title);
+        String message = "";
+        if (elsEntity != null) {
+            message = "The inventory '" + elsEntity.getTitle() + "', cannot connect to the server at " + elsEntity.getServerLocation();
+        } else {
+            message = "Cannot connect to the server at " + url;
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(message).setTitle(title);
+        AlertDialog dialog = builder.create();
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+
+            }
+        });
+        dialog.show();
     }
 
     private void showFailureAlert() {
-        showAlert(getString(R.string.activity_inventory_configurator_alert_title),
-                getString(R.string.activity_inventory_configurator_alert_message));
+//        showAlert(getString(R.string.activity_inventory_configurator_alert_title),
+//                getString(R.string.activity_inventory_configurator_alert_message));
+        String title = getString(R.string.activity_inventory_configurator_alert_title);
+        String message = getString(R.string.activity_inventory_configurator_alert_message);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(message).setTitle(title);
+        AlertDialog dialog = builder.create();
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+
+            }
+        });
+        dialog.show();
     }
 
-    private void showReconfigureInventoryAlert() {
+    private void showReconfigureInventoryAlert(ELSEntity elsEntity) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(R.string.alert_reconfigure_inventory_message)
                 .setTitle(R.string.alert_reconfigure_inventory_title);
@@ -247,9 +308,11 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-         if (id == R.id.action_refresh) {
+        if (id == R.id.action_refresh) {
+            swipeRefreshLayout.setRefreshing(true);
             if (isConnected()) {
                 updateList();
+                swipeRefreshLayout.setRefreshing(false);
             } else {
                 showNetworkConnectivityAlert();
             }
@@ -355,10 +418,15 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
     @Override
     public void onAttributeUpdate(DialogFragment dialog, final ELSLimri limri, final String iid, final String pin) {
 
+        if (!isConnected()) {
+            showNetworkConnectivityAlert();
+            return;
+        }
+
         // Get a handler that can be used to post to the main thread
         final Handler mainHandler = new Handler(getMainLooper());
 
-        Boolean createNewLimri = limri == null;
+        Boolean createNewLimri = (limri == null);
         if (createNewLimri) {
 
             // check that both pin and id have some value
@@ -375,7 +443,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                         if (result) {
                             // successful login
                             // create the new inventory
-                            final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", defaultSheet);
+                            final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", defaultSheet, ELSLimriIcon.NONE);
                             // create the button for this inventory and save it
                             final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
                             newButton.save();
@@ -420,7 +488,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                                             // could not connect
                                             newButton.delete();
                                             newLimri.delete();
-                                            showServerConnectivityAlert();
+                                            showServerConnectivityAlert(newLimri, "");
                                         }
                                     };
                                     mainHandler.post(myRunnable);
@@ -445,7 +513,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                         Runnable myRunnable = new Runnable() {
                             @Override
                             public void run() {
-                                showServerConnectivityAlert();
+                                showServerConnectivityAlert(null, defaultServer);
                             }
                         };
                         mainHandler.post(myRunnable);
@@ -539,7 +607,7 @@ public class ButtonView extends AppCompatActivity implements InventoryListAdapte
                         Runnable myRunnable = new Runnable() {
                             @Override
                             public void run() {
-                                showServerConnectivityAlert();
+                                showServerConnectivityAlert(limri, "");
                             }
                         };
                         mainHandler.post(myRunnable);
