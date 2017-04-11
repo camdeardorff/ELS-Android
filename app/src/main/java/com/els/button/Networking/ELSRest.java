@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.ELSLimriColor;
+import com.els.button.Models.ELSLimriIcon;
 import com.els.button.Networking.Callbacks.ELSRestInventoryStatusRequestCallback;
 import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.Models.ELSInventoryStatus;
@@ -314,13 +315,14 @@ public class ELSRest {
                 if (result) {
 
                     // get appearance info
-                    String status = xPathForString(document, "//appearance/status/color");
-                    String buttonText = xPathForString(document, "//appearance/button/title/text");
-                    String buttonTextColor = xPathForString(document, "//appearance/button/title/color");
-                    String buttonColor = xPathForString(document, "//appearance/button/color");
-
+                    String status = xPathForString(document, "//appearance/status/color").trim();
+                    String buttonText = xPathForString(document, "//appearance/button/title/text").trim();
+                    String buttonTextColor = xPathForString(document, "//appearance/button/title/color").trim();
+                    String buttonColor = xPathForString(document, "//appearance/button/color").trim();
+                    String icon = xPathForString(document, "//appearance/icon").trim();
+                    Log.d("ELSRest", "Icon: " + icon);
                     // get the border radius
-                    String buttonBorderRadius = xPathForString(document, "//appearance/button/border/radius");
+                    String buttonBorderRadius = xPathForString(document, "//appearance/button/border/radius").trim();
                     if (buttonBorderRadius.equals("")) {
                         buttonBorderRadius = "-1";
                     }
@@ -330,22 +332,16 @@ public class ELSRest {
                             buttonText,
                             ELSLimriColor.fromStringLiteral(buttonTextColor),
                             ELSLimriColor.fromStringLiteral(buttonColor),
-                            Integer.parseInt(buttonBorderRadius));
-
-
-
-                    // get action data
-                    String type = xPathForString(document, "//action/type");
-                    String location = xPathForString(document, "//action/location");
-                    Boolean display = Boolean.parseBoolean(xPathForString(document, "//action/display"));
+                            Integer.parseInt(buttonBorderRadius),
+                            ELSLimriIcon.fromStringLiteral(icon));
 
                     NodeList actionNodes = xPathForNodeSet(document, "//actions/action");
                     ArrayList<ELSInventoryStatusAction> actions = getActionsFromNodeList(actionNodes);
 
-                    String title = xPathForString(document, "//title");
-                    String description = xPathForSubtreeString(document, "//description");
-                    String nextStatusSheet = xPathForString(document, "//statusSheet");
-                    String nextServerLocation = xPathForString(document, "//serverLocation");
+                    String title = xPathForString(document, "//title").trim();
+                    String description = xPathForSubtreeString(document, "//description").trim();
+                    String nextStatusSheet = xPathForString(document, "//statusSheet").trim();
+                    String nextServerLocation = xPathForString(document, "//serverLocation").trim();
 
                     callback.onSuccess(new ELSInventoryStatus(title, description, nextStatusSheet, nextServerLocation, actions, appearance));
                 } else {
@@ -377,10 +373,10 @@ public class ELSRest {
             String value;
             Boolean display;
             try {
-                type = xPath.evaluate("type", actionNode);
-                location = xPath.evaluate("location", actionNode);
-                display = Boolean.parseBoolean(xPath.evaluate("display", actionNode));
-                value = xPath.evaluate("value", actionNode);
+                type = xPath.evaluate("type", actionNode).trim();
+                location = xPath.evaluate("location", actionNode).trim();
+                display = Boolean.parseBoolean(xPath.evaluate("display", actionNode).trim());
+                value = xPath.evaluate("value", actionNode).trim();
                 actions.add(new ELSInventoryStatusAction(ELSLimriButtonPressAction.fromStringLiteral(type), location, value, display));
             } catch (XPathExpressionException e) {
                 e.printStackTrace();
