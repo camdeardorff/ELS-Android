@@ -1,6 +1,7 @@
 package com.els.button.Networking.Models;
 
 import com.els.button.Models.ELSLimriColor;
+import com.els.button.Models.ELSLimriIcon;
 
 /**
  * Created by Cam on 1/24/17.
@@ -13,14 +14,15 @@ public class ELSInventoryStatusAppearance {
     private ELSLimriColor buttonColor;
     private ELSLimriColor buttonTextColor;
     private Integer buttonCornerRadius;
+    private ELSLimriIcon icon;
 
-
-    public ELSInventoryStatusAppearance(String status, String buttonText, ELSLimriColor buttonTextColor, ELSLimriColor buttonColor, Integer buttonBorderRadius) {
+    public ELSInventoryStatusAppearance(String status, String buttonText, ELSLimriColor buttonTextColor, ELSLimriColor buttonColor, Integer buttonBorderRadius, ELSLimriIcon icon) {
         this.status = status;
         this.buttonText = buttonText;
         this.buttonTextColor = buttonTextColor;
         this.buttonColor = buttonColor;
         this.buttonCornerRadius = buttonBorderRadius;
+        this.icon = icon;
     }
 
     public String getStatus() {
@@ -61,5 +63,13 @@ public class ELSInventoryStatusAppearance {
 
     public void setButtonTextColor(ELSLimriColor buttonTextColor) {
         this.buttonTextColor = buttonTextColor;
+    }
+
+    public ELSLimriIcon getIcon() {
+        return icon;
+    }
+
+    public void setIcon(ELSLimriIcon icon) {
+        this.icon = icon;
     }
 }
