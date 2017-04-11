@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Created by cameron on 3/29/16.
  */
-public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
+public class InventoryArrayAdapter extends ArrayAdapter<ELSEntity> {
     // View lookup cache
     Context context;
     ArrayList<ELSEntity> ELSEntityList;
@@ -36,7 +36,7 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
     private static class LimriViewHolder {
         TextView titleTextView;
         TextView descriptionTextView;
-        ImageView imageView;
+        ImageView iconImageView;
         Button button;
         ImageButton expandButton;
         ImageButton configureButton;
@@ -51,7 +51,7 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
     }
 
 
-    public InventoryListAdapter(Context context, InventoryListAdapterDelegate listenterDelegate, ArrayList<ELSEntity> ELSEntityList) {
+    public InventoryArrayAdapter(Context context, InventoryListAdapterDelegate listenterDelegate, ArrayList<ELSEntity> ELSEntityList) {
         super(context, R.layout.inventory_overview_layout, ELSEntityList);
 
         this.context = context;
@@ -115,7 +115,7 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
                 limriHolder.titleTextView = (TextView) limriView.findViewById(R.id.limriInventoryName);
                 limriHolder.descriptionTextView = (TextView) limriView.findViewById(R.id.limriInventoryDescription);
                 limriHolder.button = (Button) limriView.findViewById(R.id.limriButton);
-                limriHolder.imageView = (ImageView) limriView.findViewById(R.id.limriInventoryImg);
+                limriHolder.iconImageView = (ImageView) limriView.findViewById(R.id.inventoryIcon);
                 limriHolder.configureButton = (ImageButton) limriView.findViewById(R.id.configure_button);
                 limriHolder.expandButton = (ImageButton) limriView.findViewById(R.id.expandButton);
                 //set the limri view's tag to this holder
@@ -167,7 +167,9 @@ public class InventoryListAdapter extends ArrayAdapter<ELSEntity> {
             });
 
             // IMAGE VIEW
-//            limriHolder.imageView.setImageResource(R.drawable.group_img);
+            if (limriData.getIcon() != null && limriData.getIcon() != ELSLimriIcon.NONE) {
+                limriHolder.iconImageView.setImageResource(limriData.getIcon().getLiteralIcon());
+            }
 
             // BUTTON
             // set text, text color, and background color
