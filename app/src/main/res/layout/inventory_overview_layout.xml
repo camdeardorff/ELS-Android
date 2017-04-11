@@ -23,12 +23,11 @@
             android:layout_centerInParent="true">
 
             <ImageView
-                android:id="@+id/limriInventoryImg"
+                android:id="@+id/inventoryIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minHeight="32dp"
-                android:minWidth="32dp"
-                android:src="@drawable/human_male_female"/>
+                android:minWidth="32dp"/>
 
             <ImageButton
                 android:id="@+id/configure_button"
