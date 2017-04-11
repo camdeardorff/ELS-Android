@@ -18,6 +18,7 @@ import com.els.button.Models.ELSLimri;
 import com.els.button.Models.ELSLimriButton;
 import com.els.button.Models.ELSLimriButtonPressAction;
 import com.els.button.Models.ELSLimriColor;
+import com.els.button.Models.ELSLimriIcon;
 import com.els.button.Networking.Callbacks.ELSRestRequestCallback;
 import com.els.button.Networking.ELSRest;
 import com.els.button.R;
@@ -75,7 +76,7 @@ public class InventoryConfigurator extends AppCompatActivity {
 
                                     if (result) {
                                         // create the new inventory
-                                        final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", defaultSheet);
+                                        final ELSLimri newLimri = new ELSLimri(defaultServer, iid, pin, "Title", "Description", defaultSheet, ELSLimriIcon.NONE);
                                         // create the button for this inventory and save it
                                         final ELSLimriButton newButton = new ELSLimriButton("btn 1", ELSLimriColor.GREEN, ELSLimriColor.BLACK, ELSLimriButtonPressAction.NOTHING, "", true, 1);
                                         newButton.save();
