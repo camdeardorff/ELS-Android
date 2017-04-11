@@ -1,5 +1,7 @@
 package com.els.button.Models;
 
+import android.util.Log;
+
 import com.els.button.Database.AppDatabase;
 import com.els.button.Interfaces.StatusUpdateResult;
 import com.els.button.Networking.Callbacks.ELSRestInventoryStatusRequestCallback;
@@ -18,6 +20,9 @@ public class ELSLimri extends ELSEntity {
     @Column
     public String statusSheet;
 
+    @Column
+    public ELSLimriIcon icon;
+
     @ForeignKey(tableClass = ELSLimriButton.class)
     public ELSLimriButton button;
 
@@ -29,19 +34,24 @@ public class ELSLimri extends ELSEntity {
     public ELSLimri(String serverLocation, String inventoryID, String pin, String statusSheet) {
         super(serverLocation, inventoryID, pin);
         this.statusSheet = statusSheet;
+        this.icon = ELSLimriIcon.NONE;
     }
 
-    public ELSLimri(String serverLocation, String inventoryID, String pin, String title, String description, String statusSheet) {
+    public ELSLimri(String serverLocation, String inventoryID, String pin, String title, String description, String statusSheet, ELSLimriIcon icon) {
         super(serverLocation, inventoryID, pin, title, description);
         this.statusSheet = statusSheet;
+        this.icon = icon;
     }
 
     @Override
     public void updateStatus(ELSInventoryStatus status) {
-
+        Log.d("ELSLimri", "Update status 1 with icon: " + status.getAppearance().getIcon());
         super.updateStatus(status);
         if (status.getStatusSheet() != null && !status.getStatusSheet().equals("")) {
             this.setStatusSheet(status.getStatusSheet());
+        }
+        if (status.getAppearance().getIcon() != null) {
+            this.setIcon(status.getAppearance().getIcon());
         }
 
         this.save();
@@ -56,8 +66,15 @@ public class ELSLimri extends ELSEntity {
             @Override
             public void onSuccess(ELSInventoryStatus inventoryStatus) {
                 ELSLimri.super.updateStatus(inventoryStatus);
+                Log.d("ELSLimri", "Update status 2 with icon: " + inventoryStatus.getAppearance().getIcon());
+
+
                 if (inventoryStatus.getStatusSheet() != null && !inventoryStatus.getStatusSheet().equals("")) {
                     context.setStatusSheet(inventoryStatus.getStatusSheet());
+                }
+                if (inventoryStatus.getAppearance().getIcon() != null) {
+                    Log.d("ELSLimri", "set icon because it is not null");
+                    context.setIcon(inventoryStatus.getAppearance().getIcon());
                 }
 
                 if (inventoryStatus.getAppearance() != null && inventoryStatus.getActions() != null && inventoryStatus.getActions().size() > 0) {
@@ -91,6 +108,14 @@ public class ELSLimri extends ELSEntity {
         this.statusSheet = statusSheet;
     }
 
+    public ELSLimriIcon getIcon() {
+        return icon;
+    }
+
+    public void setIcon(ELSLimriIcon icon) {
+        Log.d("ELSLimri", "set icon now");
+        this.icon = icon;
+    }
 
     public ELSLimriButton getButton() {
         return button;
